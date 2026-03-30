@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BudaBike · Tour Ledger</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f2f0eb;
+    --surface: #fff;
+    --border: #dddbd4;
+    --text: #1a1917;
+    --muted: #8a887f;
+    --hint: #b8b5ac;
+    --green-bg: #e8f2e0;
+    --green-text: #2d6614;
+    --green-dark: #1e4a0e;
+    --amber-bg: #fef3dd;
+    --amber-text: #7a4f0a;
+    --blue-bg: #e4eef9;
+    --blue-text: #1a4f8a;
+    --red-bg: #fce8e8;
+    --red-text: #8a1f1f;
+    --purple-bg: #eeecfc;
+    --purple-text: #4a3eaa;
+    --accent: #1a1917;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── LOCK SCREEN ── */
+  #lock-screen {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; align-items: center; justify-content: center; z-index: 999;
+  }
+  .lock-box {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: 16px; padding: 2.5rem 2rem; width: 320px; text-align: center;
+  }
+  .lock-logo { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 1.5rem; }
+  .lock-title { font-size: 18px; font-weight: 600; margin-bottom: 0.4rem; }
+  .lock-sub { font-size: 13px; color: var(--muted); margin-bottom: 1.5rem; }
+  .lock-input { width: 100%; font-size: 18px; text-align: center; letter-spacing: 0.2em; padding: 10px; border: 0.5px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); outline: none; font-family: 'DM Mono', monospace; margin-bottom: 1rem; }
+  .lock-input:focus { border-color: var(--accent); background: #fff; }
+  .lock-btn { width: 100%; padding: 11px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .lock-btn:hover { opacity: 0.85; }
+  .lock-error { font-size: 12px; color: var(--red-text); margin-top: 8px; min-height: 16px; font-family: 'DM Mono', monospace; }
+
+  /* ── MAIN APP ── */
+  #main-app { display: none; }
+  .app { max-width: 580px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+
+  .header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.5rem; }
+  .logo { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0.08em; }
+  .sync-status { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--hint); }
+  .sync-status.ok { color: var(--green-text); }
+  .sync-status.err { color: var(--red-text); }
+
+  .tabs { display: grid; grid-template-columns: 1fr 1fr 1fr; margin-bottom: 1.5rem; background: var(--surface); border: 0.5px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .tab { padding: 10px 6px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; background: none; border: none; border-right: 0.5px solid var(--border); transition: all 0.15s; }
+  .tab:last-child { border-right: none; }
+  .tab.active { background: var(--accent); color: #fff; }
+
+  .sec { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500; color: var(--hint); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+
+  .metrics3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-bottom: 1rem; }
+  .metric { background: var(--surface); border: 0.5px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem; }
+  .metric-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .metric-value { font-size: 19px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+  .metric-sub { font-size: 10px; color: var(--hint); margin-top: 2px; font-family: 'DM Mono', monospace; }
+
+  .pot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .pot-card { border-radius: 10px; padding: 1rem 1.1rem; }
+  .pot-huf { background: var(--green-bg); }
+  .pot-eur { background: var(--amber-bg); }
+  .pot-label { font-size: 10px; font-weight: 600; font-family: 'DM Mono', monospace; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .pot-huf .pot-label { color: var(--green-text); }
+  .pot-eur .pot-label { color: var(--amber-text); }
+  .pot-amount { font-size: 22px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .pot-huf .pot-amount { color: var(--green-dark); }
+  .pot-eur .pot-amount { color: var(--amber-text); }
+  .pot-sub { font-size: 10px; margin-top: 3px; font-family: 'DM Mono', monospace; }
+  .pot-huf .pot-sub { color: var(--green-text); }
+  .pot-eur .pot-sub { color: var(--amber-text); }
+
+  .total-bar { background: var(--surface); border: 0.5px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
+  .total-bar-label { font-size: 12px; color: var(--muted); }
+  .total-bar-val { font-size: 16px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--text); }
+  .rate-inline { width: 64px; font-size: 11px; padding: 3px 5px; border-radius: 5px; border: 0.5px solid var(--border); background: var(--bg); font-family: 'DM Mono', monospace; color: var(--text); display: inline-block; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .form-full { margin-bottom: 10px; }
+  label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 4px; font-family: 'DM Mono', monospace; letter-spacing: 0.03em; }
+  input[type="text"], input[type="number"], input[type="date"] { width: 100%; font-size: 14px; font-family: 'DM Sans', sans-serif; padding: 8px 10px; border: 0.5px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); outline: none; transition: border-color 0.15s; }
+  input:focus { border-color: var(--accent); background: #fff; }
+
+  .preview { background: var(--bg); border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+  .preview strong { font-family: 'DM Mono', monospace; }
+  .preview-badge { font-size: 11px; color: var(--muted); background: var(--surface); border: 0.5px solid var(--border); padding: 2px 8px; border-radius: 99px; font-family: 'DM Mono', monospace; }
+
+  button.primary { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 11px 20px; font-size: 14px; font-weight: 500; cursor: pointer; width: 100%; font-family: 'DM Sans', sans-serif; transition: opacity 0.15s; }
+  button.primary:hover { opacity: 0.85; }
+  button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.secondary { background: var(--surface); border: 0.5px solid var(--border); border-radius: 8px; padding: 9px 16px; font-size: 13px; cursor: pointer; color: var(--text); font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+  button.secondary:hover { background: var(--bg); }
+  button.full { width: 100%; }
+  button.ghost { background: none; border: none; font-size: 12px; color: var(--hint); cursor: pointer; padding: 2px 6px; font-family: 'DM Sans', sans-serif; }
+  button.ghost:hover { color: #8a1f1f; }
+
+  .action-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 10px; }
+  .action-row > .fi { flex: 1; }
+
+  .tour-list { display: flex; flex-direction: column; gap: 8px; }
+  .tour-item { background: var(--surface); border: 0.5px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+  .tour-main { font-size: 14px; font-weight: 600; }
+  .tour-sub { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .chips { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+  .chip { font-size: 11px; padding: 3px 9px; border-radius: 99px; font-weight: 500; font-family: 'DM Mono', monospace; }
+  .c-salary { background: var(--blue-bg); color: var(--blue-text); }
+  .c-tip { background: var(--purple-bg); color: var(--purple-text); }
+  .c-cash { background: var(--green-bg); color: var(--green-text); }
+  .c-eur { background: var(--amber-bg); color: var(--amber-text); }
+  .c-hand { background: #f0ede8; color: var(--muted); }
+  .tour-note-text { font-size: 11px; color: var(--hint); margin-top: 6px; font-style: italic; }
+
+  .ledger-item { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 0.5px solid var(--border); }
+  .ledger-item:last-child { border-bottom: none; }
+  .ledger-note { font-size: 13px; color: var(--text); }
+  .ledger-date { font-size: 10px; color: var(--hint); margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .l-credit { color: var(--green-dark); font-weight: 600; font-family: 'DM Mono', monospace; font-size: 12px; text-align: right; }
+  .l-debit { color: #8a1f1f; font-weight: 600; font-family: 'DM Mono', monospace; font-size: 12px; text-align: right; }
+  .l-handover { color: var(--amber-text); font-weight: 600; font-family: 'DM Mono', monospace; font-size: 12px; text-align: right; }
+
+  .empty { text-align: center; padding: 2rem; color: var(--hint); font-size: 14px; }
+  .loading { text-align: center; padding: 2rem; color: var(--muted); font-size: 12px; font-family: 'DM Mono', monospace; }
+  .hint-text { font-size: 12px; color: var(--hint); line-height: 1.5; margin-top: 8px; }
+
+  .tab-section { display: none; }
+  .tab-section.active { display: block; }
+
+  @media (max-width: 400px) {
+    .metrics3 { grid-template-columns: 1fr 1fr; }
+    .form-row-3 { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── LOCK SCREEN ── -->
+<div id="lock-screen">
+  <div class="lock-box">
+    <div class="lock-logo">BUDABIKE · LEDGER</div>
+    <div class="lock-title">Welcome back</div>
+    <div class="lock-sub">Enter your access code to continue</div>
+    <input class="lock-input" type="password" id="lock-input" placeholder="••••••" maxlength="20" onkeydown="if(event.key==='Enter')unlock()">
+    <button class="lock-btn" onclick="unlock()">Open ledger</button>
+    <div class="lock-error" id="lock-error"></div>
+  </div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div id="main-app">
+<div class="app">
+  <div class="header">
+    <div class="logo">BUDABIKE · LEDGER</div>
+    <div class="sync-status" id="sync-status">connecting...</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('log')">Log tour</button>
+    <button class="tab" onclick="switchTab('pot')">Pot &amp; salary</button>
+    <button class="tab" onclick="switchTab('history')">History</button>
+  </div>
+
+  <!-- ── LOG TOUR ── -->
+  <div id="tab-log" class="tab-section active">
+    <div class="metrics3">
+      <div class="metric"><div class="metric-label">Tours this month</div><div class="metric-value" id="m-tours">—</div></div>
+      <div class="metric"><div class="metric-label">Salary this month</div><div class="metric-value" id="m-salary">—</div><div class="metric-sub">HUF</div></div>
+      <div class="metric"><div class="metric-label">Tips this month</div><div class="metric-value" id="m-tips">—</div><div class="metric-sub">HUF</div></div>
+    </div>
+
+    <div class="card">
+      <div class="sec">New tour entry</div>
+      <div class="form-row">
+        <div><label>Date</label><input type="date" id="f-date"></div>
+        <div><label>Number of clients</label><input type="number" id="f-pax" min="1" max="60" placeholder="e.g. 6" oninput="updatePreview()"></div>
+      </div>
+      <div class="preview" id="pay-preview" style="display:none">
+        <span style="color:var(--muted)">My salary</span>
+        <span><strong id="prev-salary">—</strong> HUF &nbsp;<span class="preview-badge" id="prev-bracket">—</span></span>
+      </div>
+
+      <div class="sec" style="margin-top:4px">Cash received from clients</div>
+      <div class="form-row-3">
+        <div><label>Cash HUF</label><input type="number" id="f-cash-huf" placeholder="0" oninput="updateCashPreview()"></div>
+        <div><label>Cash EUR</label><input type="number" id="f-cash-eur" placeholder="0" oninput="updateCashPreview()"></div>
+        <div><label>EUR → HUF rate</label><input type="number" id="f-rate" value="400" oninput="updateCashPreview()"></div>
+      </div>
+      <div class="preview" id="cash-preview" style="display:none">
+        <span style="color:var(--muted)">Hand to company</span>
+        <strong id="prev-hand">—</strong>
+      </div>
+
+      <div class="form-row">
+        <div><label>Tip (HUF)</label><input type="number" id="f-tip" placeholder="0 if none" oninput="updateCashPreview()"></div>
+        <div><label>Note (optional)</label><input type="text" id="f-note" placeholder="e.g. Dutch family"></div>
+      </div>
+      <button class="primary" id="log-btn" onclick="logTour()">Log this tour</button>
+    </div>
+
+    <div class="sec">Recent tours</div>
+    <div class="tour-list" id="tour-list"><div class="loading">loading from google sheets...</div></div>
+  </div>
+
+  <!-- ── POT & SALARY ── -->
+  <div id="tab-pot" class="tab-section">
+    <div class="pot-grid">
+      <div class="pot-card pot-huf">
+        <div class="pot-label">POT · HUF</div>
+        <div class="pot-amount" id="pot-huf-val">0</div>
+        <div class="pot-sub">forint in hand</div>
+      </div>
+      <div class="pot-card pot-eur">
+        <div class="pot-label">POT · EUR</div>
+        <div class="pot-amount" id="pot-eur-val">0</div>
+        <div class="pot-sub">euro in hand</div>
+      </div>
+    </div>
+    <div class="total-bar">
+      <div>
+        <div class="total-bar-label">Combined value</div>
+        <div style="font-size:11px;color:var(--hint);margin-top:2px;font-family:'DM Mono',monospace">EUR at rate: <input type="number" class="rate-inline" id="pot-rate" value="400" oninput="renderPotTab()"></div>
+      </div>
+      <div class="total-bar-val" id="pot-total">0 HUF</div>
+    </div>
+
+    <div class="card">
+      <div class="sec">Take salary (HUF pot)</div>
+      <div class="action-row">
+        <div class="fi"><label>Amount HUF</label><input type="number" id="w-huf" placeholder="e.g. 50000"></div>
+        <div class="fi"><label>Note</label><input type="text" id="w-note" placeholder="e.g. week 1"></div>
+        <button class="secondary" onclick="takeSalary()">Take out</button>
+      </div>
+      <div class="hint-text">Records cash you take home. HUF pot decreases.</div>
+    </div>
+
+    <div class="card">
+      <div class="sec">Hand over to company</div>
+      <div class="form-row">
+        <div><label>HUF to hand over</label><input type="number" id="ho-huf" placeholder="0"></div>
+        <div><label>EUR to hand over</label><input type="number" id="ho-eur" placeholder="0"></div>
+      </div>
+      <div class="form-full"><label>Note</label><input type="text" id="ho-note" placeholder="e.g. end of week handover"></div>
+      <button class="secondary full" onclick="handOver()">Record handover to company</button>
+      <div class="hint-text">Use when you physically give cash to Christian. Both HUF and EUR pot decrease.</div>
+    </div>
+
+    <div class="card">
+      <div class="sec">Pot ledger</div>
+      <div id="pot-ledger"><div class="loading">loading...</div></div>
+    </div>
+  </div>
+
+  <!-- ── HISTORY ── -->
+  <div id="tab-history" class="tab-section">
+    <div class="metrics3" style="margin-bottom:1rem">
+      <div class="metric"><div class="metric-label">Total tours</div><div class="metric-value" id="h-tours">—</div></div>
+      <div class="metric"><div class="metric-label">Gross salary</div><div class="metric-value" id="h-salary">—</div><div class="metric-sub">HUF</div></div>
+      <div class="metric"><div class="metric-label">Total tips</div><div class="metric-value" id="h-tips">—</div><div class="metric-sub">HUF</div></div>
+    </div>
+    <div class="metrics3" style="margin-bottom:1rem">
+      <div class="metric"><div class="metric-label">Withdrawn</div><div class="metric-value" id="h-withdrawn">—</div><div class="metric-sub">HUF salary</div></div>
+      <div class="metric"><div class="metric-label">EUR received</div><div class="metric-value" id="h-eur">—</div><div class="metric-sub">EUR total</div></div>
+      <div class="metric"><div class="metric-label">Handed over</div><div class="metric-value" id="h-handed">—</div><div class="metric-sub">HUF equiv.</div></div>
+    </div>
+    <div class="card">
+      <div class="sec">All tours</div>
+      <div id="all-tours-list"><div class="loading">loading...</div></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ── PASSWORD ─────────────────────────────────────────────────────────────
+const PASSWORD = 'krkpr';
+const SESSION_KEY = 'bb_unlocked';
+
+function unlock(){
+  const val = document.getElementById('lock-input').value;
+  if(val === PASSWORD){
+    sessionStorage.setItem(SESSION_KEY, '1');
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    loadAll();
+  } else {
+    document.getElementById('lock-error').textContent = 'incorrect code, try again';
+    document.getElementById('lock-input').value = '';
+    document.getElementById('lock-input').focus();
+  }
+}
+
+// Check if already unlocked this session
+if(sessionStorage.getItem(SESSION_KEY)==='1'){
+  document.getElementById('lock-screen').style.display='none';
+  document.getElementById('main-app').style.display='block';
+}
+
+// Auto-focus password input
+window.addEventListener('load',()=>{
+  if(sessionStorage.getItem(SESSION_KEY)!=='1'){
+    document.getElementById('lock-input').focus();
+  }
+});
+
+// ── CONFIG ────────────────────────────────────────────────────────────────
+const SPREADSHEET_ID = '1gjly1Rh99rT6Wh-fYhu92riZ62a2-mB58RluliycxpE';
+const SA_EMAIL = 'budabike-tracker@budabike.iam.gserviceaccount.com';
+const PKEY = `-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDQSQksVa1I/CQV
+CjaSagBY1qvjopHhyLnv/Cj2xqoBQsy77DjjUrq0hIx24hOIl0cHHWVjdlomltZu
+K5Yo8UzkMLT7SXaE6a14cwYKZfa0VnQbZs0Mzmdw/Y8RzjS1b0QUeG2mySmFvwUG
+yooMhJn/LYG+H8Rua1ae81WeFj0L1qCyeDt2Qb13Qh83Kg0GqSJBswxW/O0j4CMs
+H8Z+WYXl5CFA00reABHCOqyEZCgFZM4IgmSNYBXbHxdcyL+8N9qKpk+IH+2VdUp3
+ByhjihbPrpMVPf2F6zX1sSLVbKU7qPAwRiox4etJ1A4u4++xDYwGjRRQ8l+ArXtB
+3wqeYMnJAgMBAAECggEAQxFxibwg62J9f+TlA6psaC7f9JHRpcGL1fH9gtEfxv4q
+jMyY2OI3yo7v6AwOPCpyLaFSl39xsgFaFOmmFZL1rnjcnhnetxfDywhGxqxkj1dT
+Vct5dYk1F9Yd7p7WrCGi63CH5m/aFf4XcUNgxn0gVWHi6ES0bNXVc6NpS1lf2OJz
+7q3AP94s04jCXnW4dLLCNCvCU7qaRgDgem074j7dS9mkf6YJs9EEe6AVFdFFdokA
+ggK4Rxb8rqgUxajyRtZrtN1ZXjHm/SIGTkJGaibBhMcmt5n/dpZSIiZRdG5c5hoN
+uqhczDj7eyXF2TtMshczqfjEHr1QGNi0+j4B9FcCPQKBgQDpE7kFt0YXt6/ljKvp
+mZy6NaG2kN7vF9+33e/bJRvjIW5XOEuVymTpQM/JubjrrbSYyQSDXfK8pwT1jJuP
+Kw6fi4YJMsfuyrFejsQkag7MDUmXoKmsUf3fGaGNY56AprNJfnJGZdI1gEZRVBiA
+Ri8c77K3a0WenbkLtliVtDRcUwKBgQDkxR78IOYqze1atUatNFuZQFD31nuSGR0H
+wUPe+zd0XrGwDq+mfzYUTLa1QNH9o832+sRYUFK5Reat7dowujQtmbwVCeLCYR3R
+oM2j4UEE0VsgOjVkOq/KRJy+nsCyoUXpaAiqiz+L0AQyXgzPWDA8cLnmNrRZdLX8
+0q+Ku/Fd8wKBgFP01cX4UZhDg2nFdTttKOZuYTT5FES9rcl2eWrQAC6doThrv9ZS
+FG1s+iwo6TKD3LTYW/bSBZjs9L1ai8JTeS4BPSPdFeWvP5rXBFI1neTkuGiU5+l5
+k2AkxGvAwZyH77b+hD1VehXpgerTxwuVvGzI7vBhBK/xEnHkmh46zk2fAoGBAIJn
+02fJoSqZREnGt8kX5XcQcJc2Ti5T3naDNpsu/Md7CzLezEXOkhc0O5pKnulErK2y
++KWW8/Dk5cATq6LHIeM0lUAw6HABSCwsy8w1JQkIBjfytmiyA277eZY3jITG5cFN
+KlN9GPYr15iWgBrZnHV3lKCkYl3z56F8v9AHnmj9AoGBANbm8bZoP3PygTTAbU6f
+A8+ZksMYoc3CgXybPbKwhbTBsqQH3+VmbCrYyEIdkmSBKubDNcbRM+6f5lrLWYcu
+YpnVEHYOCwRgfpXuqvY2hHybw4463ud4j7JxVfgadR1sWL+nDb6kbTO4PifFZ/I9
+6jm2jMDBA97KeyhGvtuZbIBL
+-----END PRIVATE KEY-----`;
+
+// ── PAY BRACKETS ──────────────────────────────────────────────────────────
+const PAY=[{min:1,max:3,rate:17000,label:'1–3 pax'},{min:4,max:6,rate:20000,label:'4–6 pax'},{min:7,max:9,rate:25000,label:'7–9 pax'},{min:10,max:12,rate:28000,label:'10–12 pax'},{min:13,max:999,rate:35000,label:'12+ pax'}];
+function getSalary(p){return PAY.find(x=>p>=x.min&&p<=x.max)||null;}
+function fmtN(n){return Math.round(n).toLocaleString('hu-HU');}
+function fmtH(n){return fmtN(n)+' HUF';}
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let tours=[], pot=[], potHuf=0, potEur=0, totalWithdrawn=0;
+let _token=null, _tokenExp=0;
+let currentTab='log';
+
+// ── GOOGLE AUTH ───────────────────────────────────────────────────────────
+async function getToken(){
+  if(_token&&Date.now()<_tokenExp-60000) return _token;
+  const now=Math.floor(Date.now()/1000);
+  const b64u=s=>btoa(s).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+  const hdr=b64u(JSON.stringify({alg:'RS256',typ:'JWT'}));
+  const clm=b64u(JSON.stringify({iss:SA_EMAIL,scope:'https://www.googleapis.com/auth/spreadsheets',aud:'https://oauth2.googleapis.com/token',exp:now+3600,iat:now}));
+  const si=hdr+'.'+clm;
+  const kd=PKEY.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\n/g,'');
+  const kb=Uint8Array.from(atob(kd),c=>c.charCodeAt(0));
+  const ck=await crypto.subtle.importKey('pkcs8',kb.buffer,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['sign']);
+  const sig=await crypto.subtle.sign('RSASSA-PKCS1-v1_5',ck,new TextEncoder().encode(si));
+  const sb64=btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+  const jwt=si+'.'+sb64;
+  const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:`grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`});
+  const d=await r.json();
+  if(!d.access_token) throw new Error('Auth failed: '+JSON.stringify(d));
+  _token=d.access_token; _tokenExp=Date.now()+d.expires_in*1000;
+  return _token;
+}
+
+// ── SHEETS API ────────────────────────────────────────────────────────────
+async function sGet(range){
+  const t=await getToken();
+  const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}`,{headers:{Authorization:'Bearer '+t}});
+  const d=await r.json(); return d.values||[];
+}
+async function sAppend(range,values){
+  const t=await getToken();
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({values})});
+}
+async function sPut(range,values){
+  const t=await getToken();
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,{method:'PUT',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({values})});
+}
+
+async function ensureSheets(){
+  const t=await getToken();
+  const r=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}`,{headers:{Authorization:'Bearer '+t}});
+  const d=await r.json();
+  const titles=(d.sheets||[]).map(s=>s.properties.title);
+  const reqs=[];
+  if(!titles.includes('Tours')) reqs.push({addSheet:{properties:{title:'Tours'}}});
+  if(!titles.includes('Pot')) reqs.push({addSheet:{properties:{title:'Pot'}}});
+  if(reqs.length){
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}:batchUpdate`,{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({requests:reqs})});
+  }
+  const th=await sGet('Tours!A1:A1');
+  if(!th.length) await sPut('Tours!A1:L1',[['id','date','pax','salary','cashHuf','cashEur','rate','cashTotal','tip','note','handToCompany','bracket']]);
+  const ph=await sGet('Pot!A1:A1');
+  if(!ph.length) await sPut('Pot!A1:F1',[['id','date','type','huf','eur','note']]);
+}
+
+async function loadAll(){
+  setStatus('syncing…','');
+  try {
+    await ensureSheets();
+    const tr=await sGet('Tours!A2:L');
+    tours=tr.map(r=>({id:r[0],date:r[1],pax:+r[2],salary:+r[3],cashHuf:+r[4],cashEur:+r[5],rate:+r[6],cashTotal:+r[7],tip:+r[8],note:r[9]||'',handToCompany:+r[10],bracket:r[11]})).reverse();
+    const pr=await sGet('Pot!A2:F');
+    pot=pr.map(r=>({id:r[0],date:r[1],type:r[2],huf:+r[3],eur:+r[4],note:r[5]||''})).reverse();
+    recompute();
+    setStatus('synced ✓','ok');
+    renderAll();
+  } catch(e){ setStatus('sync error','err'); console.error(e); }
+}
+
+function recompute(){
+  potHuf=0; potEur=0; totalWithdrawn=0;
+  [...pot].reverse().forEach(p=>{
+    if(p.type==='tour_credit'){potHuf+=p.huf; potEur+=p.eur;}
+    else if(p.type==='salary'){potHuf-=p.huf; totalWithdrawn+=p.huf;}
+    else if(p.type==='handover'){potHuf-=p.huf; potEur-=p.eur;}
+  });
+}
+
+function setStatus(msg,cls){const el=document.getElementById('sync-status');el.textContent=msg;el.className='sync-status'+(cls?' '+cls:'');}
+
+// ── TABS ──────────────────────────────────────────────────────────────────
+function switchTab(t){
+  currentTab=t;
+  ['log','pot','history'].forEach((id,i)=>{
+    document.getElementById('tab-'+id).classList.toggle('active',id===t);
+    document.querySelectorAll('.tab')[i].classList.toggle('active',id===t);
+  });
+  if(t==='pot')renderPotTab();
+  if(t==='history')renderHistory();
+  if(t==='log')renderTourList();
+}
+
+function renderAll(){renderMetrics();renderTourList();if(currentTab==='pot')renderPotTab();if(currentTab==='history')renderHistory();}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function renderMetrics(){
+  const m=new Date().toISOString().slice(0,7);
+  const mt=tours.filter(t=>t.date.startsWith(m));
+  document.getElementById('m-tours').textContent=mt.length;
+  document.getElementById('m-salary').textContent=fmtN(mt.reduce((s,t)=>s+t.salary,0));
+  document.getElementById('m-tips').textContent=fmtN(mt.reduce((s,t)=>s+t.tip,0));
+}
+
+function tourHTML(t){
+  return `<div class="tour-item">
+    <div class="tour-main">${t.pax} client${t.pax>1?'s':''} · ${t.date}</div>
+    <div class="tour-sub">${t.bracket}</div>
+    <div class="chips">
+      <span class="chip c-salary">salary ${fmtN(t.salary)}</span>
+      ${t.tip>0?`<span class="chip c-tip">tip ${fmtN(t.tip)}</span>`:''}
+      ${t.cashHuf>0?`<span class="chip c-cash">${fmtN(t.cashHuf)} HUF</span>`:''}
+      ${t.cashEur>0?`<span class="chip c-eur">${t.cashEur} EUR</span>`:''}
+      ${t.handToCompany>0?`<span class="chip c-hand">→ co. ${fmtN(t.handToCompany)}</span>`:''}
+    </div>
+    ${t.note?`<div class="tour-note-text">${t.note}</div>`:''}
+  </div>`;
+}
+
+function renderTourList(){
+  renderMetrics();
+  const l=document.getElementById('tour-list');
+  l.innerHTML=tours.length?tours.slice(0,15).map(tourHTML).join(''):'<div class="empty">No tours logged yet.</div>';
+}
+
+function renderPotTab(){
+  document.getElementById('pot-huf-val').textContent=fmtN(Math.max(0,potHuf));
+  document.getElementById('pot-eur-val').textContent=Math.max(0,potEur).toFixed(2);
+  const rate=parseFloat(document.getElementById('pot-rate').value)||400;
+  document.getElementById('pot-total').textContent=fmtH(Math.max(0,potHuf)+Math.max(0,potEur)*rate);
+  const led=document.getElementById('pot-ledger');
+  if(!pot.length){led.innerHTML='<div class="empty">No transactions yet.</div>';return;}
+  led.innerHTML=pot.map(p=>{
+    let cls='l-credit',sign='+',amt='';
+    if(p.type==='salary'){cls='l-debit';sign='−';amt=fmtN(p.huf)+' HUF';}
+    else if(p.type==='handover'){
+      cls='l-handover';sign='↓';
+      amt=[p.huf>0?fmtN(p.huf)+' HUF':'',p.eur>0?p.eur+' EUR':''].filter(Boolean).join(' + ');
+    } else {
+      amt=[p.huf>0?fmtN(p.huf)+' HUF':'',p.eur>0?p.eur+' EUR':''].filter(Boolean).join(' + ');
+    }
+    return `<div class="ledger-item">
+      <div><div class="ledger-note">${p.note}</div><div class="ledger-date">${p.date}</div></div>
+      <div class="${cls}">${sign} ${amt}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderHistory(){
+  document.getElementById('h-tours').textContent=tours.length;
+  document.getElementById('h-salary').textContent=fmtN(tours.reduce((s,t)=>s+t.salary,0));
+  document.getElementById('h-tips').textContent=fmtN(tours.reduce((s,t)=>s+t.tip,0));
+  document.getElementById('h-withdrawn').textContent=fmtN(totalWithdrawn);
+  document.getElementById('h-eur').textContent=tours.reduce((s,t)=>s+t.cashEur,0).toFixed(2);
+  const rate=parseFloat(document.getElementById('pot-rate')?.value)||400;
+  const handed=pot.filter(p=>p.type==='handover').reduce((s,p)=>s+p.huf+p.eur*rate,0);
+  document.getElementById('h-handed').textContent=fmtN(handed);
+  const l=document.getElementById('all-tours-list');
+  l.innerHTML=tours.length?tours.map(tourHTML).join(''):'<div class="empty">No tours yet.</div>';
+}
+
+// ── FORM PREVIEW ──────────────────────────────────────────────────────────
+function updatePreview(){
+  const pax=parseInt(document.getElementById('f-pax').value);
+  const el=document.getElementById('pay-preview');
+  if(!pax||pax<1){el.style.display='none';return;}
+  const b=getSalary(pax);
+  if(!b){el.style.display='none';return;}
+  document.getElementById('prev-salary').textContent=fmtN(b.rate);
+  document.getElementById('prev-bracket').textContent=b.label;
+  el.style.display='flex'; updateCashPreview();
+}
+
+function updateCashPreview(){
+  const huf=parseFloat(document.getElementById('f-cash-huf').value)||0;
+  const eur=parseFloat(document.getElementById('f-cash-eur').value)||0;
+  const rate=parseFloat(document.getElementById('f-rate').value)||400;
+  const tip=parseFloat(document.getElementById('f-tip').value)||0;
+  const pax=parseInt(document.getElementById('f-pax').value)||0;
+  const b=getSalary(pax); const salary=b?b.rate:0;
+  const total=huf+eur*rate; const hand=Math.max(0,total-salary-tip);
+  const el=document.getElementById('cash-preview');
+  if(total===0){el.style.display='none';return;}
+  document.getElementById('prev-hand').textContent=fmtH(hand);
+  el.style.display='flex';
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────
+async function logTour(){
+  const date=document.getElementById('f-date').value;
+  const pax=parseInt(document.getElementById('f-pax').value);
+  const cashHuf=parseFloat(document.getElementById('f-cash-huf').value)||0;
+  const cashEur=parseFloat(document.getElementById('f-cash-eur').value)||0;
+  const rate=parseFloat(document.getElementById('f-rate').value)||400;
+  const tip=parseFloat(document.getElementById('f-tip').value)||0;
+  const note=document.getElementById('f-note').value.trim();
+  if(!date){alert('Select a date.');return;}
+  if(!pax||pax<1){alert('Enter number of clients.');return;}
+  const b=getSalary(pax); if(!b){alert('Invalid client count.');return;}
+  const salary=b.rate;
+  const cashTotal=cashHuf+cashEur*rate;
+  const handToCompany=Math.max(0,cashTotal-salary-tip);
+  const btn=document.getElementById('log-btn');
+  btn.disabled=true; btn.textContent='Saving…'; setStatus('saving…','');
+  try {
+    const id='T'+Date.now();
+    await sAppend('Tours!A:L',[[id,date,pax,salary,cashHuf,cashEur,rate,cashTotal,tip,note,handToCompany,b.label]]);
+    await sAppend('Pot!A:F',[['P'+Date.now(),date,'tour_credit',salary+tip,cashEur,`Tour ${date} · ${pax} clients${tip>0?' · tip':''}`]]);
+    await loadAll();
+    ['f-pax','f-cash-huf','f-cash-eur','f-tip','f-note'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('f-rate').value='400';
+    document.getElementById('pay-preview').style.display='none';
+    document.getElementById('cash-preview').style.display='none';
+  } catch(e){setStatus('save error','err');alert('Error: '+e.message);}
+  btn.disabled=false; btn.textContent='Log this tour';
+}
+
+async function takeSalary(){
+  const amt=parseFloat(document.getElementById('w-huf').value);
+  const note=document.getElementById('w-note').value.trim()||'Salary withdrawal';
+  if(!amt||amt<=0){alert('Enter an amount.');return;}
+  if(amt>potHuf){alert('Not enough HUF in pot. Current: '+fmtH(potHuf));return;}
+  setStatus('saving…','');
+  try {
+    await sAppend('Pot!A:F',[['S'+Date.now(),new Date().toISOString().slice(0,10),'salary',amt,0,note]]);
+    await loadAll();
+    document.getElementById('w-huf').value='';
+    document.getElementById('w-note').value='';
+  } catch(e){setStatus('save error','err');alert('Error: '+e.message);}
+}
+
+async function handOver(){
+  const huf=parseFloat(document.getElementById('ho-huf').value)||0;
+  const eur=parseFloat(document.getElementById('ho-eur').value)||0;
+  const note=document.getElementById('ho-note').value.trim()||'Handover to company';
+  if(huf<=0&&eur<=0){alert('Enter HUF and/or EUR to hand over.');return;}
+  if(huf>0&&huf>potHuf){alert('Not enough HUF in pot. Current: '+fmtH(potHuf));return;}
+  if(eur>0&&eur>potEur){alert('Not enough EUR in pot. Current: '+Math.max(0,potEur).toFixed(2)+' EUR');return;}
+  setStatus('saving…','');
+  try {
+    await sAppend('Pot!A:F',[['H'+Date.now(),new Date().toISOString().slice(0,10),'handover',huf,eur,note]]);
+    await loadAll();
+    document.getElementById('ho-huf').value='';
+    document.getElementById('ho-eur').value='';
+    document.getElementById('ho-note').value='';
+  } catch(e){setStatus('save error','err');alert('Error: '+e.message);}
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+if(sessionStorage.getItem(SESSION_KEY)==='1') loadAll();
+</script>
+</body>
+</html>
