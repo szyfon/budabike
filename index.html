@@ -774,5 +774,6 @@ async function handOver(){
 document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
 if(sessionStorage.getItem(SESSION_KEY)==='1')loadAll();
 </script>
+  <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/budabike/sw.js');}</script>
 </body>
 </html>
