@@ -14,6 +14,7 @@
     --amber-bg:#fef3dd; --amber-text:#7a4f0a;
     --blue-bg:#e4eef9; --blue-text:#1a4f8a;
     --red-bg:#fce8e8; --red-text:#8a1f1f;
+    --purple-bg:#eeecfc; --purple-text:#4a3eaa;
     --accent:#1a1917;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -111,6 +112,7 @@
 
   .tour-list{display:flex;flex-direction:column;gap:8px;}
   .tour-item{background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:10px 14px;}
+  .bonus-item{background:var(--purple-bg);border:0.5px solid #c8c4f0;border-radius:10px;padding:10px 14px;}
   .tour-header{display:flex;justify-content:space-between;align-items:flex-start;}
   .tour-main{font-size:14px;font-weight:600;}
   .tour-sub{font-size:11px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace;}
@@ -122,6 +124,8 @@
   .c-none{background:#f0ede8;color:var(--muted);}
   .c-morning{background:var(--amber-bg);color:var(--amber-text);}
   .c-afternoon{background:var(--blue-bg);color:var(--blue-text);}
+  .c-bonus{background:var(--purple-bg);color:var(--purple-text);}
+  .c-tip{background:var(--green-bg);color:var(--green-dark);}
   .tour-note-text{font-size:11px;color:var(--hint);margin-top:6px;font-style:italic;}
 
   .ledger-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--border);}
@@ -132,6 +136,7 @@
   .l-debit{color:#8a1f1f;font-weight:600;font-family:'DM Mono',monospace;font-size:12px;text-align:right;}
   .l-handover{color:var(--amber-text);font-weight:600;font-family:'DM Mono',monospace;font-size:12px;text-align:right;}
   .l-neutral{color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;text-align:right;}
+  .l-bonus{color:var(--purple-text);font-weight:600;font-family:'DM Mono',monospace;font-size:12px;text-align:right;}
 
   .empty{text-align:center;padding:2rem;color:var(--hint);font-size:14px;}
   .loading{text-align:center;padding:2rem;color:var(--muted);font-size:12px;font-family:'DM Mono',monospace;}
@@ -175,12 +180,11 @@
     <div class="metrics3">
       <div class="metric"><div class="metric-label">Tours this month</div><div class="metric-value" id="m-tours">—</div></div>
       <div class="metric"><div class="metric-label">Salary this month</div><div class="metric-value" id="m-salary">—</div><div class="metric-sub">HUF</div></div>
-      <div class="metric"><div class="metric-label">Cash received</div><div class="metric-value" id="m-cash">—</div><div class="metric-sub">HUF equiv.</div></div>
+      <div class="metric"><div class="metric-label">Tips this month</div><div class="metric-value" id="m-tips">—</div><div class="metric-sub">HUF equiv.</div></div>
     </div>
 
     <div class="card">
       <div class="sec">New tour entry</div>
-
       <div class="form-row">
         <div><label>Date</label><input type="date" id="f-date"></div>
         <div><label>Number of clients</label><input type="number" id="f-pax" min="1" max="60" placeholder="e.g. 6" oninput="updatePreview()"></div>
@@ -207,11 +211,30 @@
         <strong id="prev-hand">—</strong>
       </div>
 
+      <div class="sec">Tips (kept separately — enter 0 if none)</div>
+      <div class="form-row">
+        <div><label>Tip HUF</label><input type="number" id="f-tip-huf" placeholder="0"></div>
+        <div><label>Tip EUR</label><input type="number" id="f-tip-eur" placeholder="0"></div>
+      </div>
+
       <div class="form-full"><label>Note (optional)</label><input type="text" id="f-note" placeholder="e.g. Dutch family, great group"></div>
       <button class="primary" id="log-btn" onclick="logTour()">Log this tour</button>
     </div>
 
-    <div class="sec">Recent tours</div>
+    <div class="card">
+      <div class="sec">Log a bonus</div>
+      <div class="form-row">
+        <div><label>Date</label><input type="date" id="b-date"></div>
+        <div><label>Note</label><input type="text" id="b-note" placeholder="e.g. April bonus"></div>
+      </div>
+      <div class="form-row">
+        <div><label>Amount HUF</label><input type="number" id="b-huf" placeholder="0"></div>
+        <div><label>Amount EUR</label><input type="number" id="b-eur" placeholder="0"></div>
+      </div>
+      <button class="secondary full" id="bonus-btn" onclick="logBonus()">Log bonus</button>
+    </div>
+
+    <div class="sec">Recent entries</div>
     <div class="tour-list" id="tour-list"><div class="loading">loading from google sheets...</div></div>
   </div>
 
@@ -279,6 +302,19 @@
     </div>
 
     <div class="card">
+      <div class="sec">Take bonus from pot</div>
+      <div class="form-row" style="margin-bottom:8px">
+        <div><label>HUF amount</label><input type="number" id="wb-huf" placeholder="0"></div>
+        <div><label>EUR amount</label><input type="number" id="wb-eur" placeholder="0"></div>
+      </div>
+      <div class="action-row">
+        <div class="fi"><label>Note</label><input type="text" id="wb-note" placeholder="e.g. April bonus"></div>
+        <button class="secondary" onclick="takeBonus()">Take out</button>
+      </div>
+      <div class="hint-text">Tracked separately from salary. Pot ↓ · bonus balance moves toward 0.</div>
+    </div>
+
+    <div class="card">
       <div class="sec">Hand over to company</div>
       <div class="form-row">
         <div><label>HUF to hand over</label><input type="number" id="ho-huf" placeholder="0"></div>
@@ -307,12 +343,12 @@
       <div class="metric"><div class="metric-label">Cash flow EUR</div><div class="metric-value" id="h-cashflow-eur">—</div><div class="metric-sub">EUR</div></div>
     </div>
     <div class="metrics3" style="margin-bottom:1rem">
+      <div class="metric"><div class="metric-label">Tips total</div><div class="metric-value" id="h-tips">—</div><div class="metric-sub">HUF equiv.</div></div>
+      <div class="metric"><div class="metric-label">Bonus total</div><div class="metric-value" id="h-bonus">—</div><div class="metric-sub">HUF equiv.</div></div>
       <div class="metric"><div class="metric-label">Handed over</div><div class="metric-value" id="h-handed">—</div><div class="metric-sub">HUF equiv.</div></div>
-      <div class="metric"><div class="metric-label">Salary taken HUF</div><div class="metric-value" id="h-withdrawn-huf">—</div><div class="metric-sub">HUF</div></div>
-      <div class="metric"><div class="metric-label">Salary taken EUR</div><div class="metric-value" id="h-withdrawn-eur">—</div><div class="metric-sub">EUR</div></div>
     </div>
     <div class="card">
-      <div class="sec">All tours</div>
+      <div class="sec">All entries</div>
       <div id="all-tours-list"><div class="loading">loading...</div></div>
     </div>
   </div>
@@ -380,7 +416,10 @@ function fmtN(n){return Math.round(Math.abs(n)).toLocaleString('hu-HU');}
 function fmtH(n){return(n<0?'− ':'')+fmtN(n)+' HUF';}
 
 // ── STATE ─────────────────────────────────────────────────────────────────
-let tours=[], potEntries=[];
+// tours: from Tours sheet
+// bonuses: from Bonuses sheet
+// potEntries: from Pot sheet (tour_credit | salary | bonus_credit | bonus_taken | handover)
+let tours=[], bonuses=[], potEntries=[];
 let _token=null, _tokenExp=0;
 let currentTab='log';
 let tourSlot='morning';
@@ -393,21 +432,49 @@ function setSlot(s){
 }
 
 // ── ACCOUNTING ────────────────────────────────────────────────────────────
+/*
+  POT: all cash in hand
+    + tour cashHuf/cashEur
+    + bonus received (huf/eur)
+    − salary taken (huf/eur)
+    − bonus taken (huf/eur)
+    − handovers (huf/eur)
+
+  SALARY OWED = total salary earned − salary taken out (HUF equiv)
+  BONUS OWED  = total bonus logged − bonus taken out (HUF equiv)
+  COMPANY BALANCE = combined pot − salary owed − bonus owed
+*/
 function computeBalances(rate){
   let potHuf=0, potEur=0;
-  let totalSalaryEarned=0, totalTakenOutHuf=0, totalTakenOutEur=0;
+  let totalSalaryEarned=0;
+  let totalTakenOutHuf=0, totalTakenOutEur=0;
+  let totalBonusHuf=0, totalBonusEur=0;
+  let totalBonusTakenHuf=0, totalBonusTakenEur=0;
   let totalHandoverHuf=0, totalHandoverEur=0;
+  let totalTipHuf=0, totalTipEur=0;
 
   tours.forEach(t=>{
     totalSalaryEarned+=t.salary;
     potHuf+=t.cashHuf;
     potEur+=t.cashEur;
+    totalTipHuf+=t.tipHuf||0;
+    totalTipEur+=t.tipEur||0;
+  });
+
+  bonuses.forEach(b=>{
+    totalBonusHuf+=b.huf;
+    totalBonusEur+=b.eur;
+    potHuf+=b.huf;
+    potEur+=b.eur;
   });
 
   potEntries.forEach(p=>{
     if(p.type==='salary'){
       potHuf-=p.huf; potEur-=p.eur;
       totalTakenOutHuf+=p.huf; totalTakenOutEur+=p.eur;
+    } else if(p.type==='bonus_taken'){
+      potHuf-=p.huf; potEur-=p.eur;
+      totalBonusTakenHuf+=p.huf; totalBonusTakenEur+=p.eur;
     } else if(p.type==='handover'){
       potHuf-=p.huf; potEur-=p.eur;
       totalHandoverHuf+=p.huf; totalHandoverEur+=p.eur;
@@ -415,17 +482,19 @@ function computeBalances(rate){
   });
 
   const totalTakenOutHufEquiv=totalTakenOutHuf+totalTakenOutEur*rate;
-  const salaryOwed=totalSalaryEarned-totalTakenOutHufEquiv;
-  const combinedPot=potHuf+potEur*rate;
-  const companyBalance=combinedPot-Math.max(0,salaryOwed);
+  const totalBonusTakenHufEquiv=totalBonusTakenHuf+totalBonusTakenEur*rate;
+  const salaryOwed=Math.max(0, totalSalaryEarned-totalTakenOutHufEquiv);
+  const bonusOwed=Math.max(0, (totalBonusHuf+totalBonusEur*rate)-totalBonusTakenHufEquiv);
+  const combinedPot=Math.max(0, potHuf+potEur*rate);
+  const companyBalance=combinedPot-salaryOwed-bonusOwed;
 
   return {
-    potHuf:Math.max(0,potHuf), potEur:Math.max(0,potEur),
-    combinedPot:Math.max(0,combinedPot),
-    salaryOwed:Math.max(0,salaryOwed),
-    companyBalance,
-    totalSalaryEarned, totalTakenOutHuf, totalTakenOutEur,
-    totalTakenOutHufEquiv, totalHandoverHuf, totalHandoverEur
+    potHuf:Math.max(0,potHuf), potEur:Math.max(0,potEur), combinedPot,
+    salaryOwed, bonusOwed, companyBalance,
+    totalSalaryEarned, totalTakenOutHuf, totalTakenOutEur, totalTakenOutHufEquiv,
+    totalBonusHuf, totalBonusEur,
+    totalHandoverHuf, totalHandoverEur,
+    totalTipHuf, totalTipEur
   };
 }
 
@@ -483,26 +552,34 @@ async function ensureSheets(){
   const reqs=[];
   if(!titles.includes('Tours'))reqs.push({addSheet:{properties:{title:'Tours'}}});
   if(!titles.includes('Pot'))reqs.push({addSheet:{properties:{title:'Pot'}}});
+  if(!titles.includes('Bonuses'))reqs.push({addSheet:{properties:{title:'Bonuses'}}});
   if(reqs.length){
     await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}:batchUpdate`,{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({requests:reqs})});
   }
-  // Tours: id,date,pax,salary,cashHuf,cashEur,rate,note,bracket,slot
+  // Tours: id,date,pax,salary,cashHuf,cashEur,rate,note,bracket,slot,tipHuf,tipEur
   const th=await sGet('Tours!A1:A1');
-  if(!th.length)await sPut('Tours!A1:J1',[['id','date','pax','salary','cashHuf','cashEur','rate','note','bracket','slot']]);
+  if(!th.length)await sPut('Tours!A1:L1',[['id','date','pax','salary','cashHuf','cashEur','rate','note','bracket','slot','tipHuf','tipEur']]);
+  // Pot: id,date,type,huf,eur,note
   const ph=await sGet('Pot!A1:A1');
   if(!ph.length)await sPut('Pot!A1:F1',[['id','date','type','huf','eur','note']]);
+  // Bonuses: id,date,huf,eur,note
+  const bh=await sGet('Bonuses!A1:A1');
+  if(!bh.length)await sPut('Bonuses!A1:E1',[['id','date','huf','eur','note']]);
 }
 
 async function loadAll(){
   setStatus('syncing…','');
   try{
     await ensureSheets();
-    const tr=await sGet('Tours!A2:J');
+    const tr=await sGet('Tours!A2:L');
     tours=tr.map(r=>({
       id:r[0],date:r[1],pax:+r[2]||0,salary:+r[3]||0,
       cashHuf:+r[4]||0,cashEur:+r[5]||0,rate:+r[6]||400,
-      note:r[7]||'',bracket:r[8]||'',slot:r[9]||''
+      note:r[7]||'',bracket:r[8]||'',slot:r[9]||'',
+      tipHuf:+r[10]||0,tipEur:+r[11]||0
     })).reverse();
+    const br=await sGet('Bonuses!A2:E');
+    bonuses=br.map(r=>({id:r[0],date:r[1],huf:+r[2]||0,eur:+r[3]||0,note:r[4]||''})).reverse();
     const pr=await sGet('Pot!A2:F');
     potEntries=pr.map(r=>({id:r[0],date:r[1],type:r[2],huf:+r[3]||0,eur:+r[4]||0,note:r[5]||''})).reverse();
     setStatus('synced ✓','ok');
@@ -533,7 +610,8 @@ function renderMetrics(){
   const rate=getRate();
   document.getElementById('m-tours').textContent=mt.length;
   document.getElementById('m-salary').textContent=fmtN(mt.reduce((s,t)=>s+t.salary,0));
-  document.getElementById('m-cash').textContent=fmtN(mt.reduce((s,t)=>s+t.cashHuf+t.cashEur*rate,0));
+  const tips=mt.reduce((s,t)=>s+(t.tipHuf||0)+(t.tipEur||0)*rate,0);
+  document.getElementById('m-tips').textContent=fmtN(tips);
 }
 
 function tourHTML(t){
@@ -542,6 +620,10 @@ function tourHTML(t){
     ?`<span class="chip c-morning">morning</span>`
     :t.slot==='afternoon'
     ?`<span class="chip c-afternoon">afternoon</span>`:'';
+  const tipChips=[
+    t.tipHuf>0?`<span class="chip c-tip">tip ${fmtN(t.tipHuf)} HUF</span>`:'',
+    t.tipEur>0?`<span class="chip c-tip">tip ${t.tipEur} EUR</span>`:''
+  ].filter(Boolean).join('');
   return `<div class="tour-item">
     <div class="tour-header">
       <div>
@@ -556,15 +638,36 @@ function tourHTML(t){
       ${isZero?`<span class="chip c-none">online</span>`:''}
       ${!isZero&&t.cashHuf>0?`<span class="chip c-cash">${fmtN(t.cashHuf)} HUF</span>`:''}
       ${!isZero&&t.cashEur>0?`<span class="chip c-eur">${t.cashEur} EUR</span>`:''}
+      ${tipChips}
     </div>
     ${t.note?`<div class="tour-note-text">${t.note}</div>`:''}
   </div>`;
 }
 
+function bonusHTML(b){
+  const amtStr=[b.huf>0?fmtN(b.huf)+' HUF':'',b.eur>0?b.eur+' EUR':''].filter(Boolean).join(' + ');
+  return `<div class="bonus-item">
+    <div class="tour-header">
+      <div>
+        <div class="tour-main">Bonus · ${b.date}</div>
+        <div class="tour-sub">${b.note||'—'}</div>
+      </div>
+      <button class="ghost" onclick="deleteBonus('${b.id}')">✕ delete</button>
+    </div>
+    <div class="chips">
+      <span class="chip c-bonus">${amtStr}</span>
+    </div>
+  </div>`;
+}
+
 function renderTourList(){
   renderMetrics();
+  // Merge tours and bonuses sorted by date desc
+  const tourItems=tours.slice(0,15).map(t=>({date:t.date,html:tourHTML(t),id:t.id}));
+  const bonusItems=bonuses.slice(0,5).map(b=>({date:b.date,html:bonusHTML(b),id:b.id}));
+  const all=[...tourItems,...bonusItems].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15);
   const l=document.getElementById('tour-list');
-  l.innerHTML=tours.length?tours.slice(0,15).map(tourHTML).join(''):'<div class="empty">No tours logged yet.</div>';
+  l.innerHTML=all.length?all.map(x=>x.html).join(''):'<div class="empty">No entries yet.</div>';
 }
 
 function renderPotTab(){
@@ -597,6 +700,9 @@ function renderPotTab(){
     if(p.type==='salary'){
       cls='l-debit';sign='−';
       amt=[p.huf>0?fmtN(p.huf)+' HUF':'',p.eur>0?p.eur+' EUR':''].filter(Boolean).join(' + ');
+    } else if(p.type==='bonus_taken'){
+      cls='l-debit';sign='−';
+      amt=[p.huf>0?fmtN(p.huf)+' HUF':'',p.eur>0?p.eur+' EUR':''].filter(Boolean).join(' + ');
     } else if(p.type==='handover'){
       cls='l-handover';sign='↓';
       amt=[p.huf>0?fmtN(p.huf)+' HUF':'',p.eur>0?p.eur+' EUR':''].filter(Boolean).join(' + ');
@@ -622,11 +728,14 @@ function renderHistory(){
   document.getElementById('h-cashflow').textContent=fmtN(totalCashHuf+totalCashEur*rate);
   document.getElementById('h-cashflow-huf').textContent=fmtN(totalCashHuf);
   document.getElementById('h-cashflow-eur').textContent=totalCashEur.toFixed(2);
+  document.getElementById('h-tips').textContent=fmtN(b.totalTipHuf+b.totalTipEur*rate);
+  document.getElementById('h-bonus').textContent=fmtN(b.totalBonusHuf+b.totalBonusEur*rate);
   document.getElementById('h-handed').textContent=fmtN(b.totalHandoverHuf+b.totalHandoverEur*rate);
-  document.getElementById('h-withdrawn-huf').textContent=fmtN(b.totalTakenOutHuf);
-  document.getElementById('h-withdrawn-eur').textContent=b.totalTakenOutEur.toFixed(2);
   const l=document.getElementById('all-tours-list');
-  l.innerHTML=tours.length?tours.map(tourHTML).join(''):'<div class="empty">No tours yet.</div>';
+  const tourItems=tours.map(t=>({date:t.date,html:tourHTML(t)}));
+  const bonusItems=bonuses.map(bx=>({date:bx.date,html:bonusHTML(bx)}));
+  const all=[...tourItems,...bonusItems].sort((a,c)=>c.date.localeCompare(a.date));
+  l.innerHTML=all.length?all.map(x=>x.html).join(''):'<div class="empty">No entries yet.</div>';
 }
 
 // ── FORM PREVIEW ──────────────────────────────────────────────────────────
@@ -663,6 +772,8 @@ async function logTour(){
   const cashHuf=parseFloat(document.getElementById('f-cash-huf').value)||0;
   const cashEur=parseFloat(document.getElementById('f-cash-eur').value)||0;
   const rate=parseFloat(document.getElementById('f-rate').value)||400;
+  const tipHuf=parseFloat(document.getElementById('f-tip-huf').value)||0;
+  const tipEur=parseFloat(document.getElementById('f-tip-eur').value)||0;
   const note=document.getElementById('f-note').value.trim();
   if(!date){alert('Select a date.');return;}
   if(!pax||pax<1){alert('Enter number of clients.');return;}
@@ -671,21 +782,41 @@ async function logTour(){
   const potNote=cashHuf===0&&cashEur===0
     ?`Tour ${date} · ${pax} clients · online`
     :`Tour ${date} · ${pax} clients`;
-
   const btn=document.getElementById('log-btn');
   btn.disabled=true;btn.textContent='Saving…';setStatus('saving…','');
   try{
     const id='T'+Date.now();
-    await sAppend('Tours!A:J',[[id,date,pax,salary,cashHuf,cashEur,rate,note,b.label,tourSlot]]);
+    await sAppend('Tours!A:L',[[id,date,pax,salary,cashHuf,cashEur,rate,note,b.label,tourSlot,tipHuf,tipEur]]);
     await sAppend('Pot!A:F',[['P'+Date.now(),date,'tour_credit',cashHuf,cashEur,potNote]]);
     await loadAll();
-    ['f-pax','f-cash-huf','f-cash-eur','f-note'].forEach(i=>document.getElementById(i).value='');
+    ['f-pax','f-cash-huf','f-cash-eur','f-tip-huf','f-tip-eur','f-note'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('f-rate').value='400';
     document.getElementById('pay-preview').style.display='none';
     document.getElementById('cash-preview').style.display='none';
     setSlot('morning');
   }catch(e){setStatus('save error','err');alert('Error: '+e.message);}
   btn.disabled=false;btn.textContent='Log this tour';
+}
+
+// ── LOG BONUS ─────────────────────────────────────────────────────────────
+async function logBonus(){
+  const date=document.getElementById('b-date').value;
+  const huf=parseFloat(document.getElementById('b-huf').value)||0;
+  const eur=parseFloat(document.getElementById('b-eur').value)||0;
+  const note=document.getElementById('b-note').value.trim()||'Bonus';
+  if(!date){alert('Select a date.');return;}
+  if(huf<=0&&eur<=0){alert('Enter HUF and/or EUR amount.');return;}
+  const btn=document.getElementById('bonus-btn');
+  btn.disabled=true;btn.textContent='Saving…';setStatus('saving…','');
+  try{
+    const id='B'+Date.now();
+    await sAppend('Bonuses!A:E',[[id,date,huf,eur,note]]);
+    // Bonus goes into pot
+    await sAppend('Pot!A:F',[['BP'+Date.now(),date,'bonus_credit',huf,eur,`Bonus: ${note}`]]);
+    await loadAll();
+    ['b-huf','b-eur','b-note'].forEach(i=>document.getElementById(i).value='');
+  }catch(e){setStatus('save error','err');alert('Error: '+e.message);}
+  btn.disabled=false;btn.textContent='Log bonus';
 }
 
 // ── DELETE TOUR ───────────────────────────────────────────────────────────
@@ -707,7 +838,25 @@ async function deleteTour(id){
       }
     }
     await loadAll();
-  }catch(e){setStatus('error','err');alert('Error deleting: '+e.message);}
+  }catch(e){setStatus('error','err');alert('Error: '+e.message);}
+}
+
+// ── DELETE BONUS ──────────────────────────────────────────────────────────
+async function deleteBonus(id){
+  if(!confirm('Delete this bonus? Cannot be undone.'))return;
+  setStatus('deleting…','');
+  try{
+    const rows=await sGet('Bonuses!A:A');
+    const idx=rows.findIndex((r,i)=>i>0&&r[0]===id);
+    if(idx>0){const sid=await getSheetId('Bonuses');await sDeleteRow(sid,idx);}
+    const potRows=await sGet('Pot!A:F');
+    const toDelete=potRows.map((r,i)=>({r,i})).filter(({r,i})=>i>0&&r[2]==='bonus_credit'&&r[0]==='BP'+id.slice(1));
+    if(toDelete.length){
+      const psid=await getSheetId('Pot');
+      for(const {i} of toDelete.sort((a,b)=>b.i-a.i))await sDeleteRow(psid,i);
+    }
+    await loadAll();
+  }catch(e){setStatus('error','err');alert('Error: '+e.message);}
 }
 
 // ── TAKE SALARY ───────────────────────────────────────────────────────────
@@ -727,6 +876,26 @@ async function takeSalary(){
     document.getElementById('w-huf').value='';
     document.getElementById('w-eur').value='';
     document.getElementById('w-note').value='';
+  }catch(e){setStatus('save error','err');alert('Error: '+e.message);}
+}
+
+// ── TAKE BONUS ────────────────────────────────────────────────────────────
+async function takeBonus(){
+  const huf=parseFloat(document.getElementById('wb-huf').value)||0;
+  const eur=parseFloat(document.getElementById('wb-eur').value)||0;
+  const note=document.getElementById('wb-note').value.trim()||'Bonus withdrawal';
+  if(huf<=0&&eur<=0){alert('Enter HUF and/or EUR amount.');return;}
+  const rate=getRate();
+  const b=computeBalances(rate);
+  if(huf>0&&huf>b.potHuf){alert('Not enough HUF in pot. Current: '+fmtH(b.potHuf));return;}
+  if(eur>0&&eur>b.potEur){alert('Not enough EUR in pot. Current: '+b.potEur.toFixed(2)+' EUR');return;}
+  setStatus('saving…','');
+  try{
+    await sAppend('Pot!A:F',[['BT'+Date.now(),new Date().toISOString().slice(0,10),'bonus_taken',huf,eur,note]]);
+    await loadAll();
+    document.getElementById('wb-huf').value='';
+    document.getElementById('wb-eur').value='';
+    document.getElementById('wb-note').value='';
   }catch(e){setStatus('save error','err');alert('Error: '+e.message);}
 }
 
@@ -752,6 +921,7 @@ async function handOver(){
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+document.getElementById('b-date').value=new Date().toISOString().slice(0,10);
 if(sessionStorage.getItem(SESSION_KEY)==='1')loadAll();
 </script>
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/budabike/sw.js');}</script>
