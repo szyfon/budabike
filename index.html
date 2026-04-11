@@ -46,6 +46,7 @@
   .card{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;}
 
   .metrics3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:1rem;}
+  .metrics2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:1rem;}
   .metric{background:var(--surface);border:0.5px solid var(--border);border-radius:10px;padding:0.75rem 1rem;}
   .metric-label{font-size:11px;color:var(--muted);margin-bottom:4px;}
   .metric-value{font-size:19px;font-weight:600;color:var(--text);font-family:'DM Mono',monospace;}
@@ -87,6 +88,11 @@
   input[type="text"],input[type="number"],input[type="date"]{width:100%;font-size:14px;font-family:'DM Sans',sans-serif;padding:8px 10px;border:0.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);outline:none;transition:border-color 0.15s;}
   input:focus{border-color:var(--accent);background:#fff;}
 
+  .toggle2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
+  .tgl-btn{padding:9px 6px;font-size:12px;font-family:'DM Mono',monospace;font-weight:500;border:0.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--muted);cursor:pointer;text-align:center;transition:all 0.15s;line-height:1.4;}
+  .tgl-btn.on-morning{background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber-text);}
+  .tgl-btn.on-afternoon{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-text);}
+
   .preview{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
   .preview strong{font-family:'DM Mono',monospace;}
   .preview-badge{font-size:11px;color:var(--muted);background:var(--surface);border:0.5px solid var(--border);padding:2px 8px;border-radius:99px;font-family:'DM Mono',monospace;}
@@ -114,6 +120,8 @@
   .c-cash{background:var(--green-bg);color:var(--green-text);}
   .c-eur{background:var(--amber-bg);color:var(--amber-text);}
   .c-none{background:#f0ede8;color:var(--muted);}
+  .c-morning{background:var(--amber-bg);color:var(--amber-text);}
+  .c-afternoon{background:var(--blue-bg);color:var(--blue-text);}
   .tour-note-text{font-size:11px;color:var(--hint);margin-top:6px;font-style:italic;}
 
   .ledger-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--border);}
@@ -172,6 +180,7 @@
 
     <div class="card">
       <div class="sec">New tour entry</div>
+
       <div class="form-row">
         <div><label>Date</label><input type="date" id="f-date"></div>
         <div><label>Number of clients</label><input type="number" id="f-pax" min="1" max="60" placeholder="e.g. 6" oninput="updatePreview()"></div>
@@ -181,7 +190,13 @@
         <span><strong id="prev-salary">—</strong> HUF &nbsp;<span class="preview-badge" id="prev-bracket">—</span></span>
       </div>
 
-      <div class="sec" style="margin-top:4px">Cash received (after pocketing tips · enter 0 if paid online)</div>
+      <div class="sec" style="margin-top:4px">Tour slot</div>
+      <div class="toggle2">
+        <div class="tgl-btn on-morning" id="slot-morning" onclick="setSlot('morning')">morning<br>10:30 – 13:00</div>
+        <div class="tgl-btn" id="slot-afternoon" onclick="setSlot('afternoon')">afternoon<br>14:00 – 16:30</div>
+      </div>
+
+      <div class="sec">Cash received (after pocketing tips · enter 0 if paid online)</div>
       <div class="form-row-3">
         <div><label>Cash HUF</label><input type="number" id="f-cash-huf" placeholder="0" oninput="updateCashPreview()"></div>
         <div><label>Cash EUR</label><input type="number" id="f-cash-eur" placeholder="0" oninput="updateCashPreview()"></div>
@@ -202,7 +217,6 @@
 
   <!-- ── POT & SALARY ── -->
   <div id="tab-pot" class="tab-section">
-
     <div class="sec">Cash in my hands</div>
     <div class="pot3">
       <div class="pot-card pc-huf">
@@ -261,7 +275,7 @@
         <div class="fi"><label>Note</label><input type="text" id="w-note" placeholder="e.g. week 1"></div>
         <button class="secondary" onclick="takeSalary()">Take out</button>
       </div>
-      <div class="hint-text">Enter HUF, EUR, or both. Pot decreases · salary balance moves toward 0.</div>
+      <div class="hint-text">Enter HUF, EUR, or both. Pot ↓ · salary balance moves toward 0.</div>
     </div>
 
     <div class="card">
@@ -283,10 +297,14 @@
 
   <!-- ── HISTORY ── -->
   <div id="tab-history" class="tab-section">
-   <div class="metrics3" style="margin-bottom:1rem">
+    <div class="metrics2" style="margin-bottom:1rem">
       <div class="metric"><div class="metric-label">Total tours</div><div class="metric-value" id="h-tours">—</div></div>
       <div class="metric"><div class="metric-label">Gross salary</div><div class="metric-value" id="h-salary">—</div><div class="metric-sub">HUF</div></div>
+    </div>
+    <div class="metrics3" style="margin-bottom:1rem">
       <div class="metric"><div class="metric-label">Total cash flow</div><div class="metric-value" id="h-cashflow">—</div><div class="metric-sub">HUF equiv.</div></div>
+      <div class="metric"><div class="metric-label">Cash flow HUF</div><div class="metric-value" id="h-cashflow-huf">—</div><div class="metric-sub">HUF</div></div>
+      <div class="metric"><div class="metric-label">Cash flow EUR</div><div class="metric-value" id="h-cashflow-eur">—</div><div class="metric-sub">EUR</div></div>
     </div>
     <div class="metrics3" style="margin-bottom:1rem">
       <div class="metric"><div class="metric-label">Handed over</div><div class="metric-value" id="h-handed">—</div><div class="metric-sub">HUF equiv.</div></div>
@@ -365,24 +383,16 @@ function fmtH(n){return(n<0?'− ':'')+fmtN(n)+' HUF';}
 let tours=[], potEntries=[];
 let _token=null, _tokenExp=0;
 let currentTab='log';
+let tourSlot='morning';
+
+// ── SLOT TOGGLE ───────────────────────────────────────────────────────────
+function setSlot(s){
+  tourSlot=s;
+  document.getElementById('slot-morning').className='tgl-btn'+(s==='morning'?' on-morning':'');
+  document.getElementById('slot-afternoon').className='tgl-btn'+(s==='afternoon'?' on-afternoon':'');
+}
 
 // ── ACCOUNTING ────────────────────────────────────────────────────────────
-/*
-  POT: physical cash in hand
-    + cashHuf from each tour
-    + cashEur from each tour (tracked separately)
-    − salary taken out (HUF and/or EUR)
-    − handovers (HUF and/or EUR)
-
-  SALARY OWED: total earned minus taken out (converted at company rate)
-    + every tour salary (HUF)
-    − salary taken out (HUF + EUR×rate)
-
-  COMPANY BALANCE (at combined HUF value):
-    = combined pot value − salary owed
-    positive = I hold their money
-    negative = they owe me
-*/
 function computeBalances(rate){
   let potHuf=0, potEur=0;
   let totalSalaryEarned=0, totalTakenOutHuf=0, totalTakenOutEur=0;
@@ -396,39 +406,26 @@ function computeBalances(rate){
 
   potEntries.forEach(p=>{
     if(p.type==='salary'){
-      potHuf-=p.huf;
-      potEur-=p.eur;
-      totalTakenOutHuf+=p.huf;
-      totalTakenOutEur+=p.eur;
+      potHuf-=p.huf; potEur-=p.eur;
+      totalTakenOutHuf+=p.huf; totalTakenOutEur+=p.eur;
     } else if(p.type==='handover'){
-      potHuf-=p.huf;
-      potEur-=p.eur;
-      totalHandoverHuf+=p.huf;
-      totalHandoverEur+=p.eur;
+      potHuf-=p.huf; potEur-=p.eur;
+      totalHandoverHuf+=p.huf; totalHandoverEur+=p.eur;
     }
   });
 
-  // Total taken out in HUF equivalent (at company rate)
-  const totalTakenOutHufEquiv = totalTakenOutHuf + totalTakenOutEur * rate;
-  // Salary still owed in HUF
-  const salaryOwed = totalSalaryEarned - totalTakenOutHufEquiv;
-  // Combined pot value in HUF
-  const combinedPot = potHuf + potEur * rate;
-  // Company balance = what's in pot minus what I'm still owed
-  const companyBalance = combinedPot - Math.max(0, salaryOwed);
+  const totalTakenOutHufEquiv=totalTakenOutHuf+totalTakenOutEur*rate;
+  const salaryOwed=totalSalaryEarned-totalTakenOutHufEquiv;
+  const combinedPot=potHuf+potEur*rate;
+  const companyBalance=combinedPot-Math.max(0,salaryOwed);
 
   return {
-    potHuf: Math.max(0, potHuf),
-    potEur: Math.max(0, potEur),
-    combinedPot: Math.max(0, combinedPot),
-    salaryOwed: Math.max(0, salaryOwed),
+    potHuf:Math.max(0,potHuf), potEur:Math.max(0,potEur),
+    combinedPot:Math.max(0,combinedPot),
+    salaryOwed:Math.max(0,salaryOwed),
     companyBalance,
-    totalSalaryEarned,
-    totalTakenOutHuf,
-    totalTakenOutEur,
-    totalTakenOutHufEquiv,
-    totalHandoverHuf,
-    totalHandoverEur
+    totalSalaryEarned, totalTakenOutHuf, totalTakenOutEur,
+    totalTakenOutHufEquiv, totalHandoverHuf, totalHandoverEur
   };
 }
 
@@ -489,10 +486,9 @@ async function ensureSheets(){
   if(reqs.length){
     await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}:batchUpdate`,{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({requests:reqs})});
   }
-  // Tours: id,date,pax,salary,cashHuf,cashEur,rate,note,bracket
+  // Tours: id,date,pax,salary,cashHuf,cashEur,rate,note,bracket,slot
   const th=await sGet('Tours!A1:A1');
-  if(!th.length)await sPut('Tours!A1:I1',[['id','date','pax','salary','cashHuf','cashEur','rate','note','bracket']]);
-  // Pot: id,date,type,huf,eur,note
+  if(!th.length)await sPut('Tours!A1:J1',[['id','date','pax','salary','cashHuf','cashEur','rate','note','bracket','slot']]);
   const ph=await sGet('Pot!A1:A1');
   if(!ph.length)await sPut('Pot!A1:F1',[['id','date','type','huf','eur','note']]);
 }
@@ -501,11 +497,11 @@ async function loadAll(){
   setStatus('syncing…','');
   try{
     await ensureSheets();
-    const tr=await sGet('Tours!A2:I');
+    const tr=await sGet('Tours!A2:J');
     tours=tr.map(r=>({
       id:r[0],date:r[1],pax:+r[2]||0,salary:+r[3]||0,
       cashHuf:+r[4]||0,cashEur:+r[5]||0,rate:+r[6]||400,
-      note:r[7]||'',bracket:r[8]||''
+      note:r[7]||'',bracket:r[8]||'',slot:r[9]||''
     })).reverse();
     const pr=await sGet('Pot!A2:F');
     potEntries=pr.map(r=>({id:r[0],date:r[1],type:r[2],huf:+r[3]||0,eur:+r[4]||0,note:r[5]||''})).reverse();
@@ -537,23 +533,27 @@ function renderMetrics(){
   const rate=getRate();
   document.getElementById('m-tours').textContent=mt.length;
   document.getElementById('m-salary').textContent=fmtN(mt.reduce((s,t)=>s+t.salary,0));
-  const cash=mt.reduce((s,t)=>s+t.cashHuf+t.cashEur*rate,0);
-  document.getElementById('m-cash').textContent=fmtN(cash);
+  document.getElementById('m-cash').textContent=fmtN(mt.reduce((s,t)=>s+t.cashHuf+t.cashEur*rate,0));
 }
 
 function tourHTML(t){
   const isZero=t.cashHuf===0&&t.cashEur===0;
+  const slotChip=t.slot==='morning'
+    ?`<span class="chip c-morning">morning</span>`
+    :t.slot==='afternoon'
+    ?`<span class="chip c-afternoon">afternoon</span>`:'';
   return `<div class="tour-item">
     <div class="tour-header">
       <div>
         <div class="tour-main">${t.pax} client${t.pax>1?'s':''} · ${t.date}</div>
-        <div class="tour-sub">${t.bracket}${isZero?' · online (no cash)':''}</div>
+        <div class="tour-sub">${t.bracket}${isZero?' · no cash':''}</div>
       </div>
       <button class="ghost" onclick="deleteTour('${t.id}')">✕ delete</button>
     </div>
     <div class="chips">
+      ${slotChip}
       <span class="chip c-salary">salary ${fmtN(t.salary)}</span>
-      ${isZero?`<span class="chip c-none">no cash</span>`:''}
+      ${isZero?`<span class="chip c-none">online</span>`:''}
       ${!isZero&&t.cashHuf>0?`<span class="chip c-cash">${fmtN(t.cashHuf)} HUF</span>`:''}
       ${!isZero&&t.cashEur>0?`<span class="chip c-eur">${t.cashEur} EUR</span>`:''}
     </div>
@@ -576,7 +576,6 @@ function renderPotTab(){
   document.getElementById('pot-total-val').textContent=fmtN(b.combinedPot);
   document.getElementById('pot-total-sub').textContent='HUF (EUR×'+rate+')';
 
-  // Company balance
   const co=Math.round(b.companyBalance);
   const coEl=document.getElementById('co-balance');
   coEl.textContent=(co<0?'− ':'')+fmtN(co)+' HUF';
@@ -584,7 +583,6 @@ function renderPotTab(){
   document.getElementById('co-sub').textContent=co<0?'they owe me':co>0?'I hold for them':'settled';
   document.getElementById('co-hint').textContent=co<0?'collect on next cash tour':'hand over when convenient';
 
-  // Salary owed
   const sal=Math.round(b.salaryOwed);
   const salEl=document.getElementById('sal-balance');
   salEl.textContent=fmtN(sal)+' HUF';
@@ -592,7 +590,6 @@ function renderPotTab(){
   document.getElementById('sal-sub').textContent=sal>0?'take from pot when available':'fully paid out';
   document.getElementById('sal-hint').textContent='earned '+fmtN(b.totalSalaryEarned)+' · taken '+fmtN(b.totalTakenOutHufEquiv)+' HUF equiv.';
 
-  // Ledger
   const led=document.getElementById('pot-ledger');
   if(!potEntries.length){led.innerHTML='<div class="empty">No transactions yet.</div>';return;}
   led.innerHTML=potEntries.map(p=>{
@@ -618,9 +615,13 @@ function renderPotTab(){
 function renderHistory(){
   const rate=getRate();
   const b=computeBalances(rate);
+  const totalCashHuf=tours.reduce((s,t)=>s+t.cashHuf,0);
+  const totalCashEur=tours.reduce((s,t)=>s+t.cashEur,0);
   document.getElementById('h-tours').textContent=tours.length;
- document.getElementById('h-salary').textContent=fmtN(b.totalSalaryEarned);
-  document.getElementById('h-cashflow').textContent=fmtN(tours.reduce((s,t)=>s+t.cashHuf+t.cashEur*rate,0));
+  document.getElementById('h-salary').textContent=fmtN(b.totalSalaryEarned);
+  document.getElementById('h-cashflow').textContent=fmtN(totalCashHuf+totalCashEur*rate);
+  document.getElementById('h-cashflow-huf').textContent=fmtN(totalCashHuf);
+  document.getElementById('h-cashflow-eur').textContent=totalCashEur.toFixed(2);
   document.getElementById('h-handed').textContent=fmtN(b.totalHandoverHuf+b.totalHandoverEur*rate);
   document.getElementById('h-withdrawn-huf').textContent=fmtN(b.totalTakenOutHuf);
   document.getElementById('h-withdrawn-eur').textContent=b.totalTakenOutEur.toFixed(2);
@@ -675,13 +676,14 @@ async function logTour(){
   btn.disabled=true;btn.textContent='Saving…';setStatus('saving…','');
   try{
     const id='T'+Date.now();
-    await sAppend('Tours!A:I',[[id,date,pax,salary,cashHuf,cashEur,rate,note,b.label]]);
+    await sAppend('Tours!A:J',[[id,date,pax,salary,cashHuf,cashEur,rate,note,b.label,tourSlot]]);
     await sAppend('Pot!A:F',[['P'+Date.now(),date,'tour_credit',cashHuf,cashEur,potNote]]);
     await loadAll();
     ['f-pax','f-cash-huf','f-cash-eur','f-note'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('f-rate').value='400';
     document.getElementById('pay-preview').style.display='none';
     document.getElementById('cash-preview').style.display='none';
+    setSlot('morning');
   }catch(e){setStatus('save error','err');alert('Error: '+e.message);}
   btn.disabled=false;btn.textContent='Log this tour';
 }
