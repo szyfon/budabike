@@ -283,14 +283,15 @@
 
   <!-- ── HISTORY ── -->
   <div id="tab-history" class="tab-section">
-    <div class="metrics3" style="margin-bottom:1rem">
+   <div class="metrics3" style="margin-bottom:1rem">
       <div class="metric"><div class="metric-label">Total tours</div><div class="metric-value" id="h-tours">—</div></div>
       <div class="metric"><div class="metric-label">Gross salary</div><div class="metric-value" id="h-salary">—</div><div class="metric-sub">HUF</div></div>
-      <div class="metric"><div class="metric-label">Salary taken</div><div class="metric-value" id="h-withdrawn">—</div><div class="metric-sub">HUF equiv.</div></div>
+      <div class="metric"><div class="metric-label">Total cash flow</div><div class="metric-value" id="h-cashflow">—</div><div class="metric-sub">HUF equiv.</div></div>
     </div>
     <div class="metrics3" style="margin-bottom:1rem">
-      <div class="metric"><div class="metric-label">EUR received</div><div class="metric-value" id="h-eur">—</div><div class="metric-sub">EUR total</div></div>
       <div class="metric"><div class="metric-label">Handed over</div><div class="metric-value" id="h-handed">—</div><div class="metric-sub">HUF equiv.</div></div>
+      <div class="metric"><div class="metric-label">Salary taken HUF</div><div class="metric-value" id="h-withdrawn-huf">—</div><div class="metric-sub">HUF</div></div>
+      <div class="metric"><div class="metric-label">Salary taken EUR</div><div class="metric-value" id="h-withdrawn-eur">—</div><div class="metric-sub">EUR</div></div>
     </div>
     <div class="card">
       <div class="sec">All tours</div>
@@ -618,10 +619,11 @@ function renderHistory(){
   const rate=getRate();
   const b=computeBalances(rate);
   document.getElementById('h-tours').textContent=tours.length;
-  document.getElementById('h-salary').textContent=fmtN(b.totalSalaryEarned);
-  document.getElementById('h-withdrawn').textContent=fmtN(b.totalTakenOutHufEquiv);
-  document.getElementById('h-eur').textContent=tours.reduce((s,t)=>s+t.cashEur,0).toFixed(2);
+ document.getElementById('h-salary').textContent=fmtN(b.totalSalaryEarned);
+  document.getElementById('h-cashflow').textContent=fmtN(tours.reduce((s,t)=>s+t.cashHuf+t.cashEur*rate,0));
   document.getElementById('h-handed').textContent=fmtN(b.totalHandoverHuf+b.totalHandoverEur*rate);
+  document.getElementById('h-withdrawn-huf').textContent=fmtN(b.totalTakenOutHuf);
+  document.getElementById('h-withdrawn-eur').textContent=b.totalTakenOutEur.toFixed(2);
   const l=document.getElementById('all-tours-list');
   l.innerHTML=tours.length?tours.map(tourHTML).join(''):'<div class="empty">No tours yet.</div>';
 }
