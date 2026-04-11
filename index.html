@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-  <link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.json">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BudaBike · Tour Ledger</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -87,14 +87,6 @@
   input[type="text"],input[type="number"],input[type="date"]{width:100%;font-size:14px;font-family:'DM Sans',sans-serif;padding:8px 10px;border:0.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);outline:none;transition:border-color 0.15s;}
   input:focus{border-color:var(--accent);background:#fff;}
 
-  .toggle2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
-  .tgl-btn{padding:9px 4px;font-size:13px;font-family:'DM Mono',monospace;font-weight:500;border:0.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--muted);cursor:pointer;text-align:center;transition:all 0.15s;}
-  .tgl-btn.on-cash{background:var(--green-bg);color:var(--green-text);border-color:var(--green-text);}
-  .tgl-btn.on-online{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-text);}
-
-  .notice{border-radius:8px;padding:10px 12px;font-size:12px;font-family:'DM Mono',monospace;margin-bottom:10px;}
-  .notice-blue{background:var(--blue-bg);color:var(--blue-text);}
-
   .preview{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
   .preview strong{font-family:'DM Mono',monospace;}
   .preview-badge{font-size:11px;color:var(--muted);background:var(--surface);border:0.5px solid var(--border);padding:2px 8px;border-radius:99px;font-family:'DM Mono',monospace;}
@@ -121,7 +113,7 @@
   .c-salary{background:var(--blue-bg);color:var(--blue-text);}
   .c-cash{background:var(--green-bg);color:var(--green-text);}
   .c-eur{background:var(--amber-bg);color:var(--amber-text);}
-  .c-online{background:#f0ede8;color:var(--muted);}
+  .c-none{background:#f0ede8;color:var(--muted);}
   .tour-note-text{font-size:11px;color:var(--hint);margin-top:6px;font-style:italic;}
 
   .ledger-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--border);}
@@ -175,7 +167,7 @@
     <div class="metrics3">
       <div class="metric"><div class="metric-label">Tours this month</div><div class="metric-value" id="m-tours">—</div></div>
       <div class="metric"><div class="metric-label">Salary this month</div><div class="metric-value" id="m-salary">—</div><div class="metric-sub">HUF</div></div>
-      <div class="metric"><div class="metric-label">Cash tours</div><div class="metric-value" id="m-cash">—</div><div class="metric-sub">this month</div></div>
+      <div class="metric"><div class="metric-label">Cash received</div><div class="metric-value" id="m-cash">—</div><div class="metric-sub">HUF equiv.</div></div>
     </div>
 
     <div class="card">
@@ -189,26 +181,15 @@
         <span><strong id="prev-salary">—</strong> HUF &nbsp;<span class="preview-badge" id="prev-bracket">—</span></span>
       </div>
 
-      <div class="sec" style="margin-top:4px">Payment method</div>
-      <div class="toggle2">
-        <div class="tgl-btn on-cash" id="pt-cash" onclick="setPayType('cash')">cash</div>
-        <div class="tgl-btn" id="pt-online" onclick="setPayType('online')">online</div>
+      <div class="sec" style="margin-top:4px">Cash received (after pocketing tips · enter 0 if paid online)</div>
+      <div class="form-row-3">
+        <div><label>Cash HUF</label><input type="number" id="f-cash-huf" placeholder="0" oninput="updateCashPreview()"></div>
+        <div><label>Cash EUR</label><input type="number" id="f-cash-eur" placeholder="0" oninput="updateCashPreview()"></div>
+        <div><label>EUR → HUF rate</label><input type="number" id="f-rate" value="400" oninput="updateCashPreview()"></div>
       </div>
-      <div id="online-notice" class="notice notice-blue" style="display:none">
-        No cash through you — salary is owed by company.
-      </div>
-
-      <div id="cash-fields">
-        <div class="sec">Cash received (after pocketing tips)</div>
-        <div class="form-row-3">
-          <div><label>Cash HUF</label><input type="number" id="f-cash-huf" placeholder="0" oninput="updateCashPreview()"></div>
-          <div><label>Cash EUR</label><input type="number" id="f-cash-eur" placeholder="0" oninput="updateCashPreview()"></div>
-          <div><label>EUR → HUF rate</label><input type="number" id="f-rate" value="400" oninput="updateCashPreview()"></div>
-        </div>
-        <div class="preview" id="cash-preview" style="display:none">
-          <span style="color:var(--muted)">Company portion</span>
-          <strong id="prev-hand">—</strong>
-        </div>
+      <div class="preview" id="cash-preview" style="display:none">
+        <span style="color:var(--muted)">Company portion</span>
+        <strong id="prev-hand">—</strong>
       </div>
 
       <div class="form-full"><label>Note (optional)</label><input type="text" id="f-note" placeholder="e.g. Dutch family, great group"></div>
@@ -242,7 +223,7 @@
     </div>
 
     <div class="rate-row">
-      <label>EUR rate for display:</label>
+      <label>Company EUR rate:</label>
       <input type="number" class="rate-inline" id="pot-rate" value="400" oninput="renderPotTab()">
     </div>
 
@@ -272,12 +253,15 @@
 
     <div class="card">
       <div class="sec">Take salary from pot</div>
+      <div class="form-row" style="margin-bottom:8px">
+        <div><label>HUF amount</label><input type="number" id="w-huf" placeholder="0"></div>
+        <div><label>EUR amount</label><input type="number" id="w-eur" placeholder="0"></div>
+      </div>
       <div class="action-row">
-        <div class="fi"><label>Amount HUF</label><input type="number" id="w-huf" placeholder="e.g. 50000"></div>
         <div class="fi"><label>Note</label><input type="text" id="w-note" placeholder="e.g. week 1"></div>
         <button class="secondary" onclick="takeSalary()">Take out</button>
       </div>
-      <div class="hint-text">Pot ↓ · salary balance moves toward 0.</div>
+      <div class="hint-text">Enter HUF, EUR, or both. Pot decreases · salary balance moves toward 0.</div>
     </div>
 
     <div class="card">
@@ -302,12 +286,11 @@
     <div class="metrics3" style="margin-bottom:1rem">
       <div class="metric"><div class="metric-label">Total tours</div><div class="metric-value" id="h-tours">—</div></div>
       <div class="metric"><div class="metric-label">Gross salary</div><div class="metric-value" id="h-salary">—</div><div class="metric-sub">HUF</div></div>
-      <div class="metric"><div class="metric-label">Salary taken</div><div class="metric-value" id="h-withdrawn">—</div><div class="metric-sub">HUF</div></div>
+      <div class="metric"><div class="metric-label">Salary taken</div><div class="metric-value" id="h-withdrawn">—</div><div class="metric-sub">HUF equiv.</div></div>
     </div>
     <div class="metrics3" style="margin-bottom:1rem">
       <div class="metric"><div class="metric-label">EUR received</div><div class="metric-value" id="h-eur">—</div><div class="metric-sub">EUR total</div></div>
       <div class="metric"><div class="metric-label">Handed over</div><div class="metric-value" id="h-handed">—</div><div class="metric-sub">HUF equiv.</div></div>
-      <div class="metric"><div class="metric-label">Online tours</div><div class="metric-value" id="h-online">—</div><div class="metric-sub">no cash</div></div>
     </div>
     <div class="card">
       <div class="sec">All tours</div>
@@ -381,44 +364,41 @@ function fmtH(n){return(n<0?'− ':'')+fmtN(n)+' HUF';}
 let tours=[], potEntries=[];
 let _token=null, _tokenExp=0;
 let currentTab='log';
-let payType='cash';
 
 // ── ACCOUNTING ────────────────────────────────────────────────────────────
 /*
-  LOGIC (no tips in the system — Balint pockets tips before logging):
+  POT: physical cash in hand
+    + cashHuf from each tour
+    + cashEur from each tour (tracked separately)
+    − salary taken out (HUF and/or EUR)
+    − handovers (HUF and/or EUR)
 
-  POT (physical cash in hand):
-    + cash tours: cashHuf received
-    + cash tours: cashEur received (tracked separately)
-    − salary taken out (HUF)
-    − handovers (HUF and EUR)
+  SALARY OWED: total earned minus taken out (converted at company rate)
+    + every tour salary (HUF)
+    − salary taken out (HUF + EUR×rate)
 
-  SALARY OWED:
-    + every tour: salary earned (cash or online)
-    − salary taken out
-
-  COMPANY BALANCE:
-    = potHuf − salaryOwed
-    positive = I'm holding their money
-    negative = they owe me (online tours built up salary I can't take yet)
+  COMPANY BALANCE (at combined HUF value):
+    = combined pot value − salary owed
+    positive = I hold their money
+    negative = they owe me
 */
 function computeBalances(rate){
   let potHuf=0, potEur=0;
-  let totalSalaryEarned=0, totalTakenOut=0;
+  let totalSalaryEarned=0, totalTakenOutHuf=0, totalTakenOutEur=0;
   let totalHandoverHuf=0, totalHandoverEur=0;
 
   tours.forEach(t=>{
     totalSalaryEarned+=t.salary;
-    if(t.paytype==='cash'){
-      potHuf+=t.cashHuf;
-      potEur+=t.cashEur;
-    }
+    potHuf+=t.cashHuf;
+    potEur+=t.cashEur;
   });
 
   potEntries.forEach(p=>{
     if(p.type==='salary'){
       potHuf-=p.huf;
-      totalTakenOut+=p.huf;
+      potEur-=p.eur;
+      totalTakenOutHuf+=p.huf;
+      totalTakenOutEur+=p.eur;
     } else if(p.type==='handover'){
       potHuf-=p.huf;
       potEur-=p.eur;
@@ -427,32 +407,28 @@ function computeBalances(rate){
     }
   });
 
-  const salaryOwed=totalSalaryEarned-totalTakenOut;
-  // companyBalance: what's in pot minus salary still owed to me
-  // negative = they owe me more than I hold
-  const companyBalance=potHuf-salaryOwed;
+  // Total taken out in HUF equivalent (at company rate)
+  const totalTakenOutHufEquiv = totalTakenOutHuf + totalTakenOutEur * rate;
+  // Salary still owed in HUF
+  const salaryOwed = totalSalaryEarned - totalTakenOutHufEquiv;
+  // Combined pot value in HUF
+  const combinedPot = potHuf + potEur * rate;
+  // Company balance = what's in pot minus what I'm still owed
+  const companyBalance = combinedPot - Math.max(0, salaryOwed);
 
   return {
-    potHuf:Math.max(0,potHuf),
-    potEur:Math.max(0,potEur),
-    salaryOwed:Math.max(0,salaryOwed),
+    potHuf: Math.max(0, potHuf),
+    potEur: Math.max(0, potEur),
+    combinedPot: Math.max(0, combinedPot),
+    salaryOwed: Math.max(0, salaryOwed),
     companyBalance,
     totalSalaryEarned,
-    totalTakenOut,
+    totalTakenOutHuf,
+    totalTakenOutEur,
+    totalTakenOutHufEquiv,
     totalHandoverHuf,
     totalHandoverEur
   };
-}
-
-// ── PAYMENT TYPE ──────────────────────────────────────────────────────────
-function setPayType(t){
-  payType=t;
-  document.getElementById('pt-cash').className='tgl-btn'+(t==='cash'?' on-cash':'');
-  document.getElementById('pt-online').className='tgl-btn'+(t==='online'?' on-online':'');
-  document.getElementById('cash-fields').style.display=t==='online'?'none':'block';
-  document.getElementById('online-notice').style.display=t==='online'?'block':'none';
-  if(t==='online') document.getElementById('cash-preview').style.display='none';
-  else updateCashPreview();
 }
 
 // ── GOOGLE AUTH ───────────────────────────────────────────────────────────
@@ -512,9 +488,9 @@ async function ensureSheets(){
   if(reqs.length){
     await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}:batchUpdate`,{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({requests:reqs})});
   }
-  // Tours: id,date,pax,salary,cashHuf,cashEur,rate,note,bracket,paytype
+  // Tours: id,date,pax,salary,cashHuf,cashEur,rate,note,bracket
   const th=await sGet('Tours!A1:A1');
-  if(!th.length)await sPut('Tours!A1:J1',[['id','date','pax','salary','cashHuf','cashEur','rate','note','bracket','paytype']]);
+  if(!th.length)await sPut('Tours!A1:I1',[['id','date','pax','salary','cashHuf','cashEur','rate','note','bracket']]);
   // Pot: id,date,type,huf,eur,note
   const ph=await sGet('Pot!A1:A1');
   if(!ph.length)await sPut('Pot!A1:F1',[['id','date','type','huf','eur','note']]);
@@ -524,11 +500,11 @@ async function loadAll(){
   setStatus('syncing…','');
   try{
     await ensureSheets();
-    const tr=await sGet('Tours!A2:J');
+    const tr=await sGet('Tours!A2:I');
     tours=tr.map(r=>({
       id:r[0],date:r[1],pax:+r[2]||0,salary:+r[3]||0,
       cashHuf:+r[4]||0,cashEur:+r[5]||0,rate:+r[6]||400,
-      note:r[7]||'',bracket:r[8]||'',paytype:r[9]||'cash'
+      note:r[7]||'',bracket:r[8]||''
     })).reverse();
     const pr=await sGet('Pot!A2:F');
     potEntries=pr.map(r=>({id:r[0],date:r[1],type:r[2],huf:+r[3]||0,eur:+r[4]||0,note:r[5]||''})).reverse();
@@ -551,33 +527,34 @@ function switchTab(t){
   if(t==='log')renderTourList();
 }
 function renderAll(){renderMetrics();renderTourList();if(currentTab==='pot')renderPotTab();if(currentTab==='history')renderHistory();}
-
-// ── RENDER ────────────────────────────────────────────────────────────────
 function getRate(){return parseFloat(document.getElementById('pot-rate')?.value)||400;}
 
+// ── RENDER ────────────────────────────────────────────────────────────────
 function renderMetrics(){
   const m=new Date().toISOString().slice(0,7);
   const mt=tours.filter(t=>t.date.startsWith(m));
+  const rate=getRate();
   document.getElementById('m-tours').textContent=mt.length;
   document.getElementById('m-salary').textContent=fmtN(mt.reduce((s,t)=>s+t.salary,0));
-  document.getElementById('m-cash').textContent=mt.filter(t=>t.paytype==='cash').length;
+  const cash=mt.reduce((s,t)=>s+t.cashHuf+t.cashEur*rate,0);
+  document.getElementById('m-cash').textContent=fmtN(cash);
 }
 
 function tourHTML(t){
-  const isOnline=t.paytype==='online';
+  const isZero=t.cashHuf===0&&t.cashEur===0;
   return `<div class="tour-item">
     <div class="tour-header">
       <div>
         <div class="tour-main">${t.pax} client${t.pax>1?'s':''} · ${t.date}</div>
-        <div class="tour-sub">${t.bracket} · ${isOnline?'online':'cash'}</div>
+        <div class="tour-sub">${t.bracket}${isZero?' · online (no cash)':''}</div>
       </div>
       <button class="ghost" onclick="deleteTour('${t.id}')">✕ delete</button>
     </div>
     <div class="chips">
       <span class="chip c-salary">salary ${fmtN(t.salary)}</span>
-      ${isOnline?`<span class="chip c-online">no cash</span>`:''}
-      ${!isOnline&&t.cashHuf>0?`<span class="chip c-cash">${fmtN(t.cashHuf)} HUF</span>`:''}
-      ${!isOnline&&t.cashEur>0?`<span class="chip c-eur">${t.cashEur} EUR</span>`:''}
+      ${isZero?`<span class="chip c-none">no cash</span>`:''}
+      ${!isZero&&t.cashHuf>0?`<span class="chip c-cash">${fmtN(t.cashHuf)} HUF</span>`:''}
+      ${!isZero&&t.cashEur>0?`<span class="chip c-eur">${t.cashEur} EUR</span>`:''}
     </div>
     ${t.note?`<div class="tour-note-text">${t.note}</div>`:''}
   </div>`;
@@ -595,8 +572,7 @@ function renderPotTab(){
 
   document.getElementById('pot-huf-val').textContent=fmtN(b.potHuf);
   document.getElementById('pot-eur-val').textContent=b.potEur.toFixed(2);
-  const combined=b.potHuf+b.potEur*rate;
-  document.getElementById('pot-total-val').textContent=fmtN(combined);
+  document.getElementById('pot-total-val').textContent=fmtN(b.combinedPot);
   document.getElementById('pot-total-sub').textContent='HUF (EUR×'+rate+')';
 
   // Company balance
@@ -605,7 +581,7 @@ function renderPotTab(){
   coEl.textContent=(co<0?'− ':'')+fmtN(co)+' HUF';
   coEl.className='brow-val'+(co<0?' neg':co>0?' pos':'');
   document.getElementById('co-sub').textContent=co<0?'they owe me':co>0?'I hold for them':'settled';
-  document.getElementById('co-hint').textContent=co<0?'collect from next cash tour':'hand over when convenient';
+  document.getElementById('co-hint').textContent=co<0?'collect on next cash tour':'hand over when convenient';
 
   // Salary owed
   const sal=Math.round(b.salaryOwed);
@@ -613,7 +589,7 @@ function renderPotTab(){
   salEl.textContent=fmtN(sal)+' HUF';
   salEl.className='brow-val'+(sal>0?' neg':'');
   document.getElementById('sal-sub').textContent=sal>0?'take from pot when available':'fully paid out';
-  document.getElementById('sal-hint').textContent='earned '+fmtN(b.totalSalaryEarned)+' · taken '+fmtN(b.totalTakenOut);
+  document.getElementById('sal-hint').textContent='earned '+fmtN(b.totalSalaryEarned)+' · taken '+fmtN(b.totalTakenOutHufEquiv)+' HUF equiv.';
 
   // Ledger
   const led=document.getElementById('pot-ledger');
@@ -621,7 +597,8 @@ function renderPotTab(){
   led.innerHTML=potEntries.map(p=>{
     let cls='l-credit',sign='+',amt='';
     if(p.type==='salary'){
-      cls='l-debit';sign='−';amt=fmtN(p.huf)+' HUF';
+      cls='l-debit';sign='−';
+      amt=[p.huf>0?fmtN(p.huf)+' HUF':'',p.eur>0?p.eur+' EUR':''].filter(Boolean).join(' + ');
     } else if(p.type==='handover'){
       cls='l-handover';sign='↓';
       amt=[p.huf>0?fmtN(p.huf)+' HUF':'',p.eur>0?p.eur+' EUR':''].filter(Boolean).join(' + ');
@@ -642,10 +619,9 @@ function renderHistory(){
   const b=computeBalances(rate);
   document.getElementById('h-tours').textContent=tours.length;
   document.getElementById('h-salary').textContent=fmtN(b.totalSalaryEarned);
-  document.getElementById('h-withdrawn').textContent=fmtN(b.totalTakenOut);
-  document.getElementById('h-eur').textContent=tours.filter(t=>t.paytype==='cash').reduce((s,t)=>s+t.cashEur,0).toFixed(2);
+  document.getElementById('h-withdrawn').textContent=fmtN(b.totalTakenOutHufEquiv);
+  document.getElementById('h-eur').textContent=tours.reduce((s,t)=>s+t.cashEur,0).toFixed(2);
   document.getElementById('h-handed').textContent=fmtN(b.totalHandoverHuf+b.totalHandoverEur*rate);
-  document.getElementById('h-online').textContent=tours.filter(t=>t.paytype==='online').length;
   const l=document.getElementById('all-tours-list');
   l.innerHTML=tours.length?tours.map(tourHTML).join(''):'<div class="empty">No tours yet.</div>';
 }
@@ -664,7 +640,6 @@ function updatePreview(){
 }
 
 function updateCashPreview(){
-  if(payType==='online')return;
   const huf=parseFloat(document.getElementById('f-cash-huf').value)||0;
   const eur=parseFloat(document.getElementById('f-cash-eur').value)||0;
   const rate=parseFloat(document.getElementById('f-rate').value)||400;
@@ -682,16 +657,15 @@ function updateCashPreview(){
 async function logTour(){
   const date=document.getElementById('f-date').value;
   const pax=parseInt(document.getElementById('f-pax').value);
-  const isOnline=payType==='online';
-  const cashHuf=isOnline?0:(parseFloat(document.getElementById('f-cash-huf').value)||0);
-  const cashEur=isOnline?0:(parseFloat(document.getElementById('f-cash-eur').value)||0);
+  const cashHuf=parseFloat(document.getElementById('f-cash-huf').value)||0;
+  const cashEur=parseFloat(document.getElementById('f-cash-eur').value)||0;
   const rate=parseFloat(document.getElementById('f-rate').value)||400;
   const note=document.getElementById('f-note').value.trim();
   if(!date){alert('Select a date.');return;}
   if(!pax||pax<1){alert('Enter number of clients.');return;}
   const b=getSalary(pax);if(!b){alert('Invalid client count.');return;}
   const salary=b.rate;
-  const potNote=isOnline
+  const potNote=cashHuf===0&&cashEur===0
     ?`Tour ${date} · ${pax} clients · online`
     :`Tour ${date} · ${pax} clients`;
 
@@ -699,14 +673,13 @@ async function logTour(){
   btn.disabled=true;btn.textContent='Saving…';setStatus('saving…','');
   try{
     const id='T'+Date.now();
-    await sAppend('Tours!A:J',[[id,date,pax,salary,cashHuf,cashEur,rate,note,b.label,payType]]);
-    await sAppend('Pot!A:F',[['P'+Date.now(),date,'tour_credit',isOnline?0:cashHuf,isOnline?0:cashEur,potNote]]);
+    await sAppend('Tours!A:I',[[id,date,pax,salary,cashHuf,cashEur,rate,note,b.label]]);
+    await sAppend('Pot!A:F',[['P'+Date.now(),date,'tour_credit',cashHuf,cashEur,potNote]]);
     await loadAll();
     ['f-pax','f-cash-huf','f-cash-eur','f-note'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('f-rate').value='400';
     document.getElementById('pay-preview').style.display='none';
     document.getElementById('cash-preview').style.display='none';
-    setPayType('cash');
   }catch(e){setStatus('save error','err');alert('Error: '+e.message);}
   btn.disabled=false;btn.textContent='Log this tour';
 }
@@ -735,17 +708,20 @@ async function deleteTour(id){
 
 // ── TAKE SALARY ───────────────────────────────────────────────────────────
 async function takeSalary(){
-  const amt=parseFloat(document.getElementById('w-huf').value);
+  const huf=parseFloat(document.getElementById('w-huf').value)||0;
+  const eur=parseFloat(document.getElementById('w-eur').value)||0;
   const note=document.getElementById('w-note').value.trim()||'Salary withdrawal';
-  if(!amt||amt<=0){alert('Enter an amount.');return;}
+  if(huf<=0&&eur<=0){alert('Enter HUF and/or EUR amount.');return;}
   const rate=getRate();
   const b=computeBalances(rate);
-  if(amt>b.potHuf){alert('Not enough HUF in pot. Current: '+fmtH(b.potHuf));return;}
+  if(huf>0&&huf>b.potHuf){alert('Not enough HUF in pot. Current: '+fmtH(b.potHuf));return;}
+  if(eur>0&&eur>b.potEur){alert('Not enough EUR in pot. Current: '+b.potEur.toFixed(2)+' EUR');return;}
   setStatus('saving…','');
   try{
-    await sAppend('Pot!A:F',[['S'+Date.now(),new Date().toISOString().slice(0,10),'salary',amt,0,note]]);
+    await sAppend('Pot!A:F',[['S'+Date.now(),new Date().toISOString().slice(0,10),'salary',huf,eur,note]]);
     await loadAll();
     document.getElementById('w-huf').value='';
+    document.getElementById('w-eur').value='';
     document.getElementById('w-note').value='';
   }catch(e){setStatus('save error','err');alert('Error: '+e.message);}
 }
@@ -774,6 +750,6 @@ async function handOver(){
 document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
 if(sessionStorage.getItem(SESSION_KEY)==='1')loadAll();
 </script>
-  <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/budabike/sw.js');}</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/budabike/sw.js');}</script>
 </body>
 </html>
