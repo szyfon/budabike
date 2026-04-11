@@ -461,13 +461,11 @@ function computeBalances(rate){
     totalTipEur+=t.tipEur||0;
   });
 
-  bonuses.forEach(b=>{
+ bonuses.forEach(b=>{
     totalBonusHuf+=b.huf;
     totalBonusEur+=b.eur;
-    potHuf+=b.huf;
-    potEur+=b.eur;
+    // bonus is owed by company, does not enter pot until taken out
   });
-
   potEntries.forEach(p=>{
     if(p.type==='salary'){
       potHuf-=p.huf; potEur-=p.eur;
@@ -812,7 +810,6 @@ async function logBonus(){
     const id='B'+Date.now();
     await sAppend('Bonuses!A:E',[[id,date,huf,eur,note]]);
     // Bonus goes into pot
-    await sAppend('Pot!A:F',[['BP'+Date.now(),date,'bonus_credit',huf,eur,`Bonus: ${note}`]]);
     await loadAll();
     ['b-huf','b-eur','b-note'].forEach(i=>document.getElementById(i).value='');
   }catch(e){setStatus('save error','err');alert('Error: '+e.message);}
